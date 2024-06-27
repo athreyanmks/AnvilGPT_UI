@@ -1,8 +1,9 @@
 import os
 import logging
 import requests
+import traceback
 
-from typing import List
+from typing import List, Union
 
 from apps.ollama.main import (
     generate_ollama_embeddings,
@@ -11,6 +12,7 @@ from apps.ollama.main import (
 
 from huggingface_hub import snapshot_download
 
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 from langchain_community.retrievers import BM25Retriever
 from langchain.retrievers import (
@@ -19,11 +21,35 @@ from langchain.retrievers import (
 )
 
 from typing import Optional
-from config import SRC_LOG_LEVELS, CHROMA_CLIENT
+from langchain_postgres.vectorstores import PGVector
 
+from config import SRC_LOG_LEVELS, CHROMA_CLIENT, VECTOR_DATABASE_STORE, VECTOR_DATABASE_METHOD, VECTOR_DATABASE_NAME, DATABASE_HOST, DATABASE_PORT, DATABASE_SECRET, RAG_EMBEDDING_MODEL
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["RAG"])
+
+def result_reformatter(query_result):
+    reformatted_result = []
+    result_temp = {}
+    result_temp['documents'] = []
+    result_temp['distances'] = []
+    result_temp['metadatas'] = []
+    result_temp['documents'].append([])
+    result_temp['distances'].append([])
+    result_temp['metadatas'].append([])
+
+    for result in query_result:
+        # print(result)
+        result_temp['documents'][0].append(result[0].page_content)
+        result_temp['distances'][0].append(result[1])
+        result_temp['metadatas'][0].append(result[0].metadata)
+    print(result_temp)
+    return_val = []
+    return_val.append(result_temp)
+    return result_temp
+
+
+
 
 
 def query_doc(
@@ -32,19 +58,48 @@ def query_doc(
     embedding_function,
     k: int,
 ):
-    try:
-        collection = CHROMA_CLIENT.get_collection(name=collection_name)
-        query_embeddings = embedding_function(query)
+    print("querying doc")
+    print(query)
+    if VECTOR_DATABASE_STORE == 'chroma':
+        try:
+            collection = CHROMA_CLIENT.get_collection(name=collection_name)
+            query_embeddings = embedding_function(query)
 
-        result = collection.query(
-            query_embeddings=[query_embeddings],
-            n_results=k,
-        )
+            result = collection.query(
+                query_embeddings=[query_embeddings],
+                n_results=k,
+            )
 
-        log.info(f"query_doc:result {result}")
-        return result
-    except Exception as e:
-        raise e
+            log.info(f"query_doc:result {result}")
+            return result
+        except Exception as e:
+            raise e
+
+        
+    elif VECTOR_DATABASE_STORE == 'pgvector':
+        try:
+            print("In pgvector DB")
+            connection_string = VECTOR_DATABASE_METHOD+"://postgres:"+DATABASE_SECRET+"@"+ DATABASE_HOST + ":" + str(DATABASE_PORT) + "/" + VECTOR_DATABASE_NAME
+            
+            vectorDB = PGVector(
+                embeddings=embedding_function,
+                collection_name = collection_name,
+                connection=connection_string,
+                use_jsonb=True
+            )
+            print("Before result")
+            result = vectorDB.similarity_search_with_score_by_vector(embedding_function(query), k=k)
+
+            print(result)
+
+            result = result_reformatter(result)
+
+            print(result)
+            print("#######")
+            return result
+        except Exception as e:
+            raise e
+
 
 
 def query_doc_with_hybrid_search(
@@ -55,48 +110,114 @@ def query_doc_with_hybrid_search(
     reranking_function,
     r: float,
 ):
-    try:
-        collection = CHROMA_CLIENT.get_collection(name=collection_name)
-        documents = collection.get()  # get all documents
+    print("querying doc in hybrid")
+    if VECTOR_DATABASE_STORE == 'chroma':
+        try:
+            collection = CHROMA_CLIENT.get_collection(name=collection_name)
+            documents = collection.get()  # get all documents
 
-        bm25_retriever = BM25Retriever.from_texts(
-            texts=documents.get("documents"),
-            metadatas=documents.get("metadatas"),
-        )
-        bm25_retriever.k = k
+            bm25_retriever = BM25Retriever.from_texts(
+                texts=documents.get("documents"),
+                metadatas=documents.get("metadatas"),
+            )
+            bm25_retriever.k = k
 
-        chroma_retriever = ChromaRetriever(
-            collection=collection,
-            embedding_function=embedding_function,
-            top_n=k,
-        )
+            chroma_retriever = ChromaRetriever(
+                collection=collection,
+                embedding_function=embedding_function,
+                top_n=k,
+            )
 
-        ensemble_retriever = EnsembleRetriever(
-            retrievers=[bm25_retriever, chroma_retriever], weights=[0.5, 0.5]
-        )
+            ensemble_retriever = EnsembleRetriever(
+                retrievers=[bm25_retriever, chroma_retriever], weights=[0.5, 0.5]
+            )
 
-        compressor = RerankCompressor(
-            embedding_function=embedding_function,
-            top_n=k,
-            reranking_function=reranking_function,
-            r_score=r,
-        )
+            compressor = RerankCompressor(
+                embedding_function=embedding_function,
+                top_n=k,
+                reranking_function=reranking_function,
+                r_score=r,
+            )
 
-        compression_retriever = ContextualCompressionRetriever(
-            base_compressor=compressor, base_retriever=ensemble_retriever
-        )
+            compression_retriever = ContextualCompressionRetriever(
+                base_compressor=compressor, base_retriever=ensemble_retriever
+            )
 
-        result = compression_retriever.invoke(query)
-        result = {
-            "distances": [[d.metadata.get("score") for d in result]],
-            "documents": [[d.page_content for d in result]],
-            "metadatas": [[d.metadata for d in result]],
-        }
+            result = compression_retriever.invoke(query)
+            result = {
+                "distances": [[d.metadata.get("score") for d in result]],
+                "documents": [[d.page_content for d in result]],
+                "metadatas": [[d.metadata for d in result]],
+            }
 
-        log.info(f"query_doc_with_hybrid_search:result {result}")
-        return result
-    except Exception as e:
-        raise e
+            log.info(f"query_doc_with_hybrid_search:result {result}")
+            return result
+        except Exception as e:
+            raise e
+    
+    elif VECTOR_DATABASE_STORE == 'pgvector':
+        try:
+            connection_string = VECTOR_DATABASE_METHOD+"://postgres:"+DATABASE_SECRET+"@"+ DATABASE_HOST + ":" + str(DATABASE_PORT) + "/" + VECTOR_DATABASE_NAME
+            embeddings = HuggingFaceEmbeddings(model_name=RAG_EMBEDDING_MODEL.env_value.split('/')[-1])
+
+            vectorDB = PGVector(
+                embeddings=embeddings,
+                collection_name = collection_name,
+                connection=connection_string,
+                use_jsonb=True
+            )
+            print("QHere")
+            docs = vectorDB.similarity_search_by_vector(embedding_function(""))  # get all documents
+            print("QHere1.5")
+            texts = [doc.page_content for doc in docs]
+            metadatas = [doc.metadata for doc in docs]
+            print("QHere")
+            bm25_retriever = BM25Retriever.from_documents(
+                documents = docs
+            )
+            bm25_retriever.k = k
+            print("QHere2")
+            pgvector_retriever = vectorDB.as_retriever()
+
+            ensemble_retriever = EnsembleRetriever(
+                retrievers=[bm25_retriever, pgvector_retriever], weights=[0.5, 0.5]
+            )
+            print("QHere3")
+            
+            compressor = RerankCompressor(
+                embedding_function=embedding_function,
+                top_n=k,
+                reranking_function=reranking_function,
+                r_score=r,
+            )
+            print("QHere4")
+            compression_retriever = ContextualCompressionRetriever(
+                base_compressor=compressor, base_retriever=ensemble_retriever
+            )
+            print("QHere5")
+            result = compression_retriever.invoke(query)
+            print("QHere6")
+            result = {
+                "distances": [[d.metadata.get("score") for d in result]],
+                "documents": [[d.page_content for d in result]],
+                "metadatas": [[d.metadata for d in result]],
+            }
+
+            
+            # embedding_texts = list(map(lambda x: x.replace("\n", " "), texts))
+            # embeddings = embedding_function(embedding_texts)
+
+            # result = vectorDB.similarity_search(query, k=k)
+
+
+            print(result)
+            print("#######")
+            return result
+        except Exception as e:
+            print(e)
+            print(traceback.format_exc())
+            print("()()()()")
+            # raise e
 
 
 def merge_and_sort_query_results(query_results, k, reverse=False):
@@ -104,6 +225,8 @@ def merge_and_sort_query_results(query_results, k, reverse=False):
     combined_distances = []
     combined_documents = []
     combined_metadatas = []
+
+    print(query_results)
 
     for data in query_results:
         combined_distances.extend(data["distances"][0])
@@ -146,6 +269,7 @@ def query_collection(
     embedding_function,
     k: int,
 ):
+    print("querying collection")
     results = []
     for collection_name in collection_names:
         try:
@@ -156,7 +280,8 @@ def query_collection(
                 embedding_function=embedding_function,
             )
             results.append(result)
-        except:
+        except Exception as e:
+            print(e)
             pass
     return merge_and_sort_query_results(results, k=k)
 
@@ -169,6 +294,7 @@ def query_collection_with_hybrid_search(
     reranking_function,
     r: float,
 ):
+    print("querying collection in hybrid")
     results = []
     for collection_name in collection_names:
         try:
@@ -198,6 +324,7 @@ def get_embedding_function(
     embedding_function,
     openai_key,
     openai_url,
+    batch_size,
 ):
     if embedding_engine == "":
         return lambda query: embedding_function.encode(query).tolist()
@@ -221,7 +348,13 @@ def get_embedding_function(
 
         def generate_multiple(query, f):
             if isinstance(query, list):
-                return [f(q) for q in query]
+                if embedding_engine == "openai":
+                    embeddings = []
+                    for i in range(0, len(query), batch_size):
+                        embeddings.extend(f(query[i : i + batch_size]))
+                    return embeddings
+                else:
+                    return [f(q) for q in query]
             else:
                 return f(query)
 
@@ -270,18 +403,18 @@ def rag_messages(
 
     for doc in docs:
         context = None
-
+        print("Here")
         collection_names = (
             doc["collection_names"]
             if doc["type"] == "collection"
             else [doc["collection_name"]]
         )
-
+        print("Here2")
         collection_names = set(collection_names).difference(extracted_collections)
         if not collection_names:
             log.debug(f"skipping {doc} as it has already been extracted")
             continue
-
+        print("Here3")
         try:
             if doc["type"] == "text":
                 context = doc["content"]
@@ -296,13 +429,17 @@ def rag_messages(
                         r=r,
                     )
                 else:
+                    print("Here4")
                     context = query_collection(
                         collection_names=collection_names,
                         query=query,
                         embedding_function=embedding_function,
                         k=k,
                     )
+                    print(context)
+                    print("########")
         except Exception as e:
+            print(e)
             log.exception(e)
             context = None
 
@@ -402,8 +539,22 @@ def get_model_path(model: str, update_model: bool = False):
 
 
 def generate_openai_embeddings(
-    model: str, text: str, key: str, url: str = "https://api.openai.com/v1"
+    model: str,
+    text: Union[str, list[str]],
+    key: str,
+    url: str = "https://api.openai.com/v1",
 ):
+    if isinstance(text, list):
+        embeddings = generate_openai_batch_embeddings(model, text, key, url)
+    else:
+        embeddings = generate_openai_batch_embeddings(model, [text], key, url)
+
+    return embeddings[0] if isinstance(text, str) else embeddings
+
+
+def generate_openai_batch_embeddings(
+    model: str, texts: list[str], key: str, url: str = "https://api.openai.com/v1"
+) -> Optional[list[list[float]]]:
     try:
         r = requests.post(
             f"{url}/embeddings",
@@ -411,12 +562,12 @@ def generate_openai_embeddings(
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {key}",
             },
-            json={"input": text, "model": model},
+            json={"input": texts, "model": model},
         )
         r.raise_for_status()
         data = r.json()
         if "data" in data:
-            return data["data"][0]["embedding"]
+            return [elem["embedding"] for elem in data["data"]]
         else:
             raise "Something went wrong :/"
     except Exception as e:

@@ -22,7 +22,8 @@
 		getChatListByTagName,
 		updateChatById,
 		getAllChatTags,
-		archiveChatById
+		archiveChatById,
+		cloneChatById
 	} from '$lib/apis/chats';
 	import { toast } from 'svelte-sonner';
 	import { fade, slide } from 'svelte/transition';
@@ -33,6 +34,7 @@
 	import ArchiveBox from '../icons/ArchiveBox.svelte';
 	import ArchivedChatsModal from './Sidebar/ArchivedChatsModal.svelte';
 	import UserMenu from './Sidebar/UserMenu.svelte';
+	import { updateUserSettings } from '$lib/apis/users';
 
 	const BREAKPOINT = 768;
 
@@ -181,15 +183,31 @@
 		}
 	};
 
+	const cloneChatHandler = async (id) => {
+		const res = await cloneChatById(localStorage.token, id).catch((error) => {
+			toast.error(error);
+			return null;
+		});
+
+		if (res) {
+			goto(`/c/${res.id}`);
+			await chats.set(await getChatList(localStorage.token));
+		}
+	};
+
 	const saveSettings = async (updated) => {
 		await settings.set({ ...$settings, ...updated });
-		localStorage.setItem('settings', JSON.stringify($settings));
+		await updateUserSettings(localStorage.token, { ui: $settings });
 		location.href = '/';
 	};
 
 	const archiveChatHandler = async (id) => {
 		await archiveChatById(localStorage.token, id);
 		await chats.set(await getChatList(localStorage.token));
+	};
+
+	const focusEdit = async (node: HTMLInputElement) => {
+		node.focus();
 	};
 </script>
 
@@ -299,7 +317,7 @@
 			</button>
 		</div>
 
-		{#if $user?.role === 'admin'}
+		<!-- {#if $user?.role === 'admin'} -->
 			<div class="px-2.5 flex justify-center text-gray-800 dark:text-gray-200">
 				<a
 					class="flex-grow flex space-x-3 rounded-xl px-2.5 py-2 hover:bg-gray-100 dark:hover:bg-gray-900 transition"
@@ -332,7 +350,7 @@
 					</div>
 				</a>
 			</div>
-		{/if}
+		<!-- {/if} -->
 
 		<div class="relative flex flex-col flex-1 overflow-y-auto">
 			{#if !($settings.saveChatHistory ?? true)}
@@ -475,7 +493,11 @@
 									? 'bg-gray-100 dark:bg-gray-950'
 									: 'group-hover:bg-gray-100 dark:group-hover:bg-gray-950'}  whitespace-nowrap text-ellipsis"
 							>
-								<input bind:value={chatTitle} class=" bg-transparent w-full outline-none mr-10" />
+								<input
+									use:focusEdit
+									bind:value={chatTitle}
+									class=" bg-transparent w-full outline-none mr-10"
+								/>
 							</div>
 						{:else}
 							<a
@@ -492,6 +514,10 @@
 									if ($mobile) {
 										showSidebar.set(false);
 									}
+								}}
+								on:dblclick={() => {
+									chatTitle = chat.title;
+									chatTitleEditId = chat.id;
 								}}
 								draggable="false"
 							>
@@ -600,6 +626,9 @@
 								<div class="flex self-center space-x-1 z-10">
 									<ChatMenu
 										chatId={chat.id}
+										cloneChatHandler={() => {
+											cloneChatHandler(chat.id);
+										}}
 										shareHandler={() => {
 											shareChatId = selectedChatId;
 											showShareChatModal = true;
