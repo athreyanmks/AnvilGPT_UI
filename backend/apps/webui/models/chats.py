@@ -245,6 +245,7 @@ class ChatTable:
                 # .offset(skip)
             ]
 
+
     def get_chat_list_by_chat_ids(
         self, chat_ids: List[str], skip: int = 0, limit: int = 50
     ) -> List[ChatModel]:

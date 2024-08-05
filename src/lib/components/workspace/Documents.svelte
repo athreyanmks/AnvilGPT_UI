@@ -4,12 +4,13 @@
 	const { saveAs } = fileSaver;
 
 	import { onMount, getContext } from 'svelte';
-	import { WEBUI_NAME, documents } from '$lib/stores';
+	import { WEBUI_NAME, documents, collection_filtered_documents } from '$lib/stores';
 	import { createNewDoc, deleteDocByName, getDocs } from '$lib/apis/documents';
 
 	import { SUPPORTED_FILE_TYPE, SUPPORTED_FILE_EXTENSIONS } from '$lib/constants';
-	import { uploadDocToVectorDB } from '$lib/apis/rag';
+	import { uploadDocToVectorDB, deleteDocFromVectorDB } from '$lib/apis/rag';
 	import { transformFileName } from '$lib/utils';
+	// import collection_filtered_documents from '$lib/components/workspace/CollectionFilter.svelte'
 
 	import Checkbox from '$lib/components/common/Checkbox.svelte';
 
@@ -17,6 +18,7 @@
 	import AddFilesPlaceholder from '$lib/components/AddFilesPlaceholder.svelte';
 	import SettingsModal from '$lib/components/documents/SettingsModal.svelte';
 	import AddDocModal from '$lib/components/documents/AddDocModal.svelte';
+	import CollectionFilter from './CollectionFilter.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -26,6 +28,7 @@
 	let query = '';
 	let documentsImportInputElement: HTMLInputElement;
 	let tags = [];
+	// let result = {};
 
 	let showSettingsModal = false;
 	let showAddDocModal = false;
@@ -36,7 +39,9 @@
 	let dragged = false;
 
 	const deleteDoc = async (name) => {
-		await deleteDocByName(localStorage.token, name);
+		const result = await deleteDocByName(localStorage.token, name);
+		console.log(result)
+		await deleteDocFromVectorDB(localStorage.token, result['collection_name'], result['vector_ids'])
 		await documents.set(await getDocs(localStorage.token));
 	};
 
@@ -55,6 +60,8 @@
 			toast.error(error);
 			return null;
 		});
+		// console.log("Hereeeeeeeeeeeee")
+		// console.log(res.vector_ids.toString())
 
 		if (res) {
 			await createNewDoc(
@@ -62,7 +69,8 @@
 				res.collection_name,
 				res.filename,
 				transformFileName(res.filename),
-				res.filename
+				res.filename,
+				res.vector_ids.toString(),
 			).catch((error) => {
 				toast.error(error);
 				return null;
@@ -78,6 +86,8 @@
 			}, []);
 		});
 		const dropZone = document.querySelector('body');
+
+		console.log("Herereereee")
 
 		const onDragOver = (e) => {
 			e.preventDefault();
@@ -142,7 +152,7 @@
 
 	let filteredDocs;
 
-	$: filteredDocs = $documents.filter(
+	$: filteredDocs = $collection_filtered_documents.filter(
 		(doc) =>
 			(selectedTag === '' ||
 				(doc?.content?.tags ?? []).map((tag) => tag.name).includes(selectedTag)) &&
@@ -154,7 +164,10 @@
 	<title>
 		{$i18n.t('Documents')} | {$WEBUI_NAME}
 	</title>
+	<!-- <CollectionFilter/> -->
 </svelte:head>
+
+
 
 {#if dragged}
 	<div
@@ -187,8 +200,9 @@
 
 <div class="mb-3">
 	<div class="flex justify-between items-center">
-		<div class=" text-lg font-semibold self-center">{$i18n.t('Documents')}</div>
+		<!-- <div class=" text-lg font-semibold self-center">{$i18n.t('Documents')}</div> -->
 
+		<CollectionFilter/>
 		<div>
 			<button
 				class="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition"
@@ -210,7 +224,7 @@
 					/>
 				</svg>
 
-				<div class=" text-xs">{$i18n.t('Document Settings')}</div>
+				<div class=" text-xs">{$i18n.t('')}</div>
 			</button>
 		</div>
 	</div>
@@ -530,20 +544,22 @@
 			accept=".json"
 			hidden
 			on:change={() => {
-				console.log(importFiles);
+				// console.log(importFiles);
 
 				const reader = new FileReader();
 				reader.onload = async (event) => {
 					const savedDocs = JSON.parse(event.target.result);
-					console.log(savedDocs);
+					// console.log(savedDocs);
 
 					for (const doc of savedDocs) {
+						// console.log(doc)
 						await createNewDoc(
 							localStorage.token,
 							doc.collection_name,
 							doc.filename,
 							doc.name,
-							doc.title
+							doc.title,
+							doc.vector_ids
 						).catch((error) => {
 							toast.error(error);
 							return null;

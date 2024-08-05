@@ -177,6 +177,40 @@ export const userSignUp = async (
 	return res;
 };
 
+export const resetPassword = async(
+	email : string
+) =>{
+
+	let error = null;
+
+	const res = await fetch(`${WEBUI_API_BASE_URL}/auths/${email}/resetpassword`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+		})
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.log(err);
+			error = err.detail;
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+	console.log(email)
+
+	return res;
+
+	
+};
+
 export const addUser = async (
 	token: string,
 	name: string,

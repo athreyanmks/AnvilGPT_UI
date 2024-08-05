@@ -278,14 +278,14 @@
 			>
 				<div class=" self-start w-8 pt-0.5">
 					<div
-						class=" rounded-full bg-stone-700 {model?.info?.meta?.hidden ?? false
+						class=" rounded-full bg-stone-400 {model?.info?.meta?.hidden ?? false
 							? 'brightness-90 dark:brightness-50'
 							: ''} "
 					>
 						<img
-							src={model?.info?.meta?.profile_image_url ?? '/favicon.png'}
+							src={model?.info?.meta?.profile_image_url ?? '/modelIcon.png'}
 							alt="modelfile profile"
-							class=" rounded-full w-full h-auto object-cover"
+							class=" rounded-full w-auto h-auto object-cover"
 						/>
 					</div>
 				</div>

@@ -6,6 +6,7 @@
 </script>
 
 <div class={($settings?.chatDirection ?? 'LTR') === 'LTR' ? 'mr-3' : 'ml-3'}>
+	<!-- <div class="bg-stone-400 rounded-full"> -->
 	<img
 		crossorigin="anonymous"
 		src={src.startsWith(WEBUI_BASE_URL) ||
@@ -14,8 +15,17 @@
 		src.startsWith('/')
 			? src
 			: `/user.png`}
-		class=" w-8 object-cover rounded-full"
+		class=" w-8 object-cover"
 		alt="profile"
 		draggable="false"
 	/>
+<!-- </div> -->
 </div>
+
+<style>
+	.profile-image {
+	height: inherit;
+	/* width: 100%; */
+	object-fit: cover;
+	}
+</style>

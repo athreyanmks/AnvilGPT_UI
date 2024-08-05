@@ -42,6 +42,23 @@ export const documents = writable([
 	}
 ]);
 
+export const collection_filtered_documents = writable([
+	{
+		collection_name: 'collection_name',
+		filename: 'filename',
+		name: 'name',
+		title: 'title'
+	},
+	{
+		collection_name: 'collection_name1',
+		filename: 'filename1',
+		name: 'name1',
+		title: 'title1'
+	}
+]);
+
+export const created_collections = writable([{collection_name:'collection_name'}])
+
 export const banners: Writable<Banner[]> = writable([]);
 
 export const settings: Writable<Settings> = writable({});

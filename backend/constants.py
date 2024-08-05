@@ -7,6 +7,7 @@ class MESSAGES(str, Enum):
     MODEL_DELETED = (
         lambda model="": f"The model '{model}' has been deleted successfully."
     )
+    RESET_PASSWORD = "New password sent to your email"
 
 
 class WEBHOOK_MESSAGES(str, Enum):
@@ -14,6 +15,7 @@ class WEBHOOK_MESSAGES(str, Enum):
     USER_SIGNUP = lambda username="": (
         f"New user signed up: {username}" if username else "New user signed up"
     )
+    
 
 
 class ERROR_MESSAGES(str, Enum):

@@ -38,14 +38,14 @@
 							selectedModelIdx = modelIdx;
 						}}
 					>
-						<img
+						<!-- <img
 							crossorigin="anonymous"
 							src={model?.info?.meta?.profile_image_url ??
 								($i18n.language === 'dg-DG' ? `/doge.png` : `${WEBUI_BASE_URL}/static/favicon.png`)}
-							class=" size-[2.7rem] rounded-full border-[1px] border-gray-200 dark:border-none"
+							class=" size-[2.7rem] resizable-image"
 							alt="logo"
 							draggable="false"
-						/>
+						/> -->
 					</button>
 				{/each}
 			</div>
@@ -102,3 +102,12 @@
 		</div>
 	</div>
 {/key}
+
+<style> 
+	.resizable-image { 
+		max-width: 100%; 
+		max-height: 100%; 
+		display: block; 
+		margin: auto; 
+	} 
+</style> 

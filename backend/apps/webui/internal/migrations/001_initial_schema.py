@@ -94,6 +94,7 @@ def migrate_sqlite(migrator: Migrator, database: pw.Database, *, fake=False):
         content = pw.TextField(null=True)
         user_id = pw.CharField(max_length=255)
         timestamp = pw.BigIntegerField()
+        vector_ids = pw.TextField()
         
 
         class Meta:
@@ -101,6 +102,15 @@ def migrate_sqlite(migrator: Migrator, database: pw.Database, *, fake=False):
             indexes = (
             (('name', 'user_id'), True),
         )
+            
+    @migrator.create_model
+    class Collections(pw.Model):
+        id = pw.AutoField()
+        collection_name = pw.CharField(max_length=255, unique=True)
+        user_id = pw.CharField(max_length=255)
+
+        class Meta:
+            table_name = "collections"
 
     @migrator.create_model
     class Modelfile(pw.Model):
@@ -198,6 +208,7 @@ def migrate_external(migrator: Migrator, database: pw.Database, *, fake=False):
         content = pw.TextField(null=True)
         user_id = pw.CharField(max_length=255)
         timestamp = pw.BigIntegerField()
+        vector_ids = pw.TextField()
         # dummy = pw.CharField()
 
         class Meta:
@@ -205,6 +216,15 @@ def migrate_external(migrator: Migrator, database: pw.Database, *, fake=False):
             indexes = (
             (('name', 'user_id'), True),
         )
+
+    @migrator.create_model
+    class Collections(pw.Model):
+        id = pw.AutoField()
+        collection_name = pw.CharField(max_length=255, unique=True)
+        user_id = pw.CharField(max_length=255)
+
+        class Meta:
+            table_name = "collections"
 
     @migrator.create_model
     class Modelfile(pw.Model):

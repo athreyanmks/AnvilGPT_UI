@@ -27,7 +27,7 @@ RUN npm ci
 
 COPY . .
 ENV APP_BUILD_HASH=${BUILD_HASH}
-RUN npm run build
+# RUN npm run build
 
 ######## WebUI backend ########
 FROM python:3.11-slim-bookworm as base
@@ -78,7 +78,7 @@ ENV HF_HOME="/app/backend/data/cache/embedding/models"
 
 WORKDIR /app/backend
 
-ENV HOME /root
+ENV HOME="/root"
 # Create user and group if not root
 RUN if [ $UID -ne 0 ]; then \
     if [ $GID -ne 0 ]; then \

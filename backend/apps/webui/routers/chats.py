@@ -76,11 +76,14 @@ async def delete_all_user_chats(request: Request, user=Depends(get_current_user)
 
 @router.get("/list/user/{user_id}", response_model=List[ChatTitleIdResponse])
 async def get_user_chat_list_by_user_id(
-    user_id: str, user=Depends(get_admin_user), skip: int = 0, limit: int = 50
+    user_id: str, user=Depends(get_current_user), skip: int = 0, limit: int = 50
 ):
-    return Chats.get_chat_list_by_user_id(
-        user_id, include_archived=True, skip=skip, limit=limit
-    )
+    if user.user_id == user_id:
+        return Chats.get_chat_list_by_user_id(
+            user_id, user, include_archived=True, skip=skip, limit=limit
+        )
+    else:
+        return None
 
 
 ############################

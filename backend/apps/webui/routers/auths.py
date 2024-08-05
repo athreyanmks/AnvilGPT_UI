@@ -8,6 +8,8 @@ from pydantic import BaseModel
 import re
 import uuid
 import csv
+import secrets
+import smtplib
 
 
 from apps.webui.models.auths import (
@@ -32,7 +34,7 @@ from utils.utils import (
 )
 from utils.misc import parse_duration, validate_email_format
 from utils.webhook import post_webhook
-from constants import ERROR_MESSAGES, WEBHOOK_MESSAGES
+from constants import ERROR_MESSAGES, WEBHOOK_MESSAGES, MESSAGES
 from config import WEBUI_AUTH, WEBUI_AUTH_TRUSTED_EMAIL_HEADER
 
 router = APIRouter()
@@ -96,6 +98,30 @@ async def update_password(
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_PASSWORD)
     else:
         raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
+    
+
+@router.post("/{email}/resetpassword", response_model=bool)
+async def reset_password(
+    email : str
+):
+    email_user = Users.get_user_by_email(email.lower())
+    if email_user:
+        generated_password = secrets.token_urlsafe(12)
+        send_email = "anvilgptuitest@gmail.com"
+        text = f"Subject : Reset Password \n\n Here is your new password: "+ generated_password
+        server  = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+
+        server.login(send_email,"jqxm huvr rbsu pgma")
+
+        server.sendmail(send_email, email, text)
+        print("Email sent to "+ email)
+        hashed = get_password_hash(generated_password)
+        Auths.update_user_password_by_id(email_user.id, hashed)
+        return {"message": MESSAGES.RESET_PASSWORD}
+    else:
+        raise HTTPException(400, detail=ERROR_MESSAGES.USER_NOT_FOUND)
+
 
 
 ############################

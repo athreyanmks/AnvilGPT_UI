@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getDocs } from '$lib/apis/documents';
+	import { getCollections, getDocs } from '$lib/apis/documents';
 	import {
 		getQuerySettings,
 		scanDocs,
@@ -12,7 +12,7 @@
 		resetUploadDir
 	} from '$lib/apis/rag';
 
-	import { documents, models } from '$lib/stores';
+	import { created_collections, documents, models } from '$lib/stores';
 	import { onMount, getContext } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -49,6 +49,8 @@
 
 		if (res) {
 			await documents.set(await getDocs(localStorage.token));
+			await created_collections.set(await getCollections(localStorage.token))
+			console.log(created_collections)
 			toast.success($i18n.t('Scan complete!'));
 		}
 	};

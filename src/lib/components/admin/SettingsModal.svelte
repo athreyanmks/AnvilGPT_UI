@@ -5,6 +5,8 @@
 
 	import General from './Settings/General.svelte';
 	import Users from './Settings/Users.svelte';
+	import { showSettings} from '$lib/stores';
+
 
 	import Banners from '$lib/components/admin/Settings/Banners.svelte';
 	import { toast } from 'svelte-sonner';
@@ -186,30 +188,35 @@
 					<General
 						saveHandler={() => {
 							toast.success($i18n.t('Settings saved successfully!'));
+							showSettings.set(false)
 						}}
 					/>
 				{:else if selectedTab === 'users'}
 					<Users
 						saveHandler={() => {
 							toast.success($i18n.t('Settings saved successfully!'));
+							showSettings.set(false)
 						}}
 					/>
 				{:else if selectedTab === 'db'}
 					<Database
 						saveHandler={() => {
 							toast.success($i18n.t('Settings saved successfully!'));
+							showSettings.set(false)
 						}}
 					/>
 				{:else if selectedTab === 'banners'}
 					<Banners
 						saveHandler={() => {
 							toast.success($i18n.t('Settings saved successfully!'));
+							showSettings.set(false)
 						}}
 					/>
 				{:else if selectedTab === 'pipelines'}
 					<Pipelines
 						saveHandler={() => {
 							toast.success($i18n.t('Settings saved successfully!'));
+							showSettings.set(false)
 						}}
 					/>
 				{/if}

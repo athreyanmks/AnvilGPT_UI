@@ -875,7 +875,7 @@ def store_data_in_vector_db(data, collection_name, overwrite: bool = False) -> b
 
     if len(docs) > 0:
         log.info(f"store_data_in_vector_db {docs}")
-        return store_docs_in_vector_db(docs, collection_name, overwrite), None
+        return store_docs_in_vector_db(docs, collection_name, overwrite)
     else:
         raise ValueError(ERROR_MESSAGES.EMPTY_CONTENT)
 
@@ -960,6 +960,8 @@ def store_docs_in_vector_db(docs, collection_name, overwrite: bool = False) -> b
             embedding_texts = list(map(lambda x: x.replace("\n", " "), texts))
             embeddings = embedding_func(embedding_texts)
 
+            print(collection_name)
+
             vectorDB = PGVector(
                 embeddings=embedding_func,
                 # embeddings=app.state.sentence_transformer_ef,
@@ -976,9 +978,51 @@ def store_docs_in_vector_db(docs, collection_name, overwrite: bool = False) -> b
 
             # print(returned_ids)
             # print("#######")
-            return True
+            return returned_ids
         except:
             return False
+        
+def delete_docs_from_vector_db(collection_name, vector_ids):
+    try:
+        connection_string = VECTOR_DATABASE_METHOD+"://postgres:"+DATABASE_SECRET+"@"+ DATABASE_HOST + ":" + str(DATABASE_PORT) + "/" + VECTOR_DATABASE_NAME
+
+        embedding_func = get_embedding_function(
+            app.state.config.RAG_EMBEDDING_ENGINE,
+            app.state.config.RAG_EMBEDDING_MODEL,
+            app.state.sentence_transformer_ef,
+            app.state.config.OPENAI_API_KEY,
+            app.state.config.OPENAI_API_BASE_URL,
+            app.state.config.RAG_EMBEDDING_OPENAI_BATCH_SIZE,
+        )
+
+        print(collection_name)
+
+        vectorDB = PGVector(
+            embeddings=embedding_func,
+            # embeddings=app.state.sentence_transformer_ef,
+            collection_name = collection_name,
+            connection=connection_string,
+            use_jsonb=True
+        )
+
+        print(vector_ids)
+        print("HERERERE")
+        vector_ids = vector_ids[0]
+        vector_ids = vector_ids.split(',')
+        
+        print(type(vector_ids))
+        print(len(vector_ids))
+
+
+        for vector_id in vector_ids:
+            vectorDB.delete([vector_id],False)
+
+
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
 
 
 def get_loader(filename: str, file_content_type: str, file_path: str):
@@ -1110,6 +1154,53 @@ def store_doc(
                     "collection_name": collection_name,
                     "filename": filename,
                     "known_type": known_type,
+                    "vector_ids": result,
+                }
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=e,
+            )
+    except Exception as e:
+        log.exception(e)
+        if "No pandoc was found" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ERROR_MESSAGES.PANDOC_NOT_INSTALLED,
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ERROR_MESSAGES.DEFAULT(e),
+            )
+        
+@app.delete("/delete/doc")
+def delete_doc(
+    collection_name: Optional[str] = Form(None),
+    vector_ids : List[str]= None,
+    user=Depends(get_current_user),
+):
+    # "https://www.gutenberg.org/files/1727/1727-h/1727-h.htm"
+
+    # log.info(f"file.content_type: {file.content_type}")
+    try:
+
+
+        # f = open(file_path, "rb")
+        if collection_name == None:
+            collection_name = calculate_sha256(collection_name)[:63]
+        # f.close()
+
+
+
+        try:
+            result = delete_docs_from_vector_db(collection_name, vector_ids)
+
+            if result:
+                return {
+                    "status": True,
+                    "collection_name": collection_name,
+                    "vector_ids": vector_ids,
                 }
         except Exception as e:
             raise HTTPException(

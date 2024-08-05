@@ -115,11 +115,11 @@
 				href={`/?models=${encodeURIComponent(modelfile.tagName)}`}
 			>
 				<div class=" self-center w-10">
-					<div class=" rounded-full bg-stone-700">
+					<div class=" bg-stone-100">
 						<img
 							src={modelfile.imageUrl ?? '/user.png'}
 							alt="modelfile profile"
-							class=" rounded-full w-full h-auto object-cover"
+							class=" w-full h-auto object-cover"
 						/>
 					</div>
 				</div>

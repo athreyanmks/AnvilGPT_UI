@@ -6,9 +6,13 @@ export const createNewDoc = async (
 	filename: string,
 	name: string,
 	title: string,
+	vector_ids : string,
 	content: object | null = null
 ) => {
 	let error = null;
+	// console.log("Here")
+	// console.log(title)
+	// console.log(vector_ids)
 
 	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/create`, {
 		method: 'POST',
@@ -22,6 +26,7 @@ export const createNewDoc = async (
 			filename: filename,
 			name: name,
 			title: title,
+			vector_ids: vector_ids,
 			...(content ? { content: JSON.stringify(content) } : {})
 		})
 	})
@@ -67,6 +72,38 @@ export const getDocs = async (token: string = '') => {
 		});
 
 	if (error) {
+		throw error;
+	}
+
+	return res;
+};
+
+export const getCollections = async (token: string = '') => {
+	let error = null;
+
+	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/collections`, {
+		method: 'GET',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			authorization: `Bearer ${token}`
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.then((json) => {
+			return json;
+		})
+		.catch((err) => {
+			error = err.detail;
+			console.log(err);
+			return null;
+		});
+	// console.log(res)
+	if (error) {
+		console.log(res)
 		throw error;
 	}
 

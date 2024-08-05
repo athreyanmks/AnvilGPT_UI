@@ -1,6 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
-	import { userSignIn, userSignUp } from '$lib/apis/auths';
+	import { userSignIn, userSignUp, resetPassword } from '$lib/apis/auths';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 	import { WEBUI_NAME, config, user, socket } from '$lib/stores';
@@ -49,11 +49,26 @@
 		await setSessionUser(sessionUser);
 	};
 
+	const forgetPasswordHandler = async () => {
+		await resetPassword(email).catch(
+			(error) => {
+				toast.error(error);
+				return null;
+			}
+		);
+		toast.success($i18n.t(`New password sent to your email.`));
+
+	};
+
 	const submitHandler = async () => {
 		if (mode === 'signin') {
 			await signInHandler();
-		} else {
+		} else if(mode === 'signup') {
 			await signUpHandler();
+		}
+		else if(mode === 'forgetpassword'){
+			forgetPasswordHandler();
+			mode = 'signin'
 		}
 	};
 
@@ -81,7 +96,7 @@
 				<img
 					crossorigin="anonymous"
 					src="{WEBUI_BASE_URL}/static/favicon.png"
-					class=" w-8 rounded-full"
+					class=" w-8"
 					alt="logo"
 				/>
 			</div>
@@ -174,6 +189,7 @@
 								/>
 							</div>
 
+							{#if mode !== 'forgetpassword'}
 							<div>
 								<div class=" text-sm font-semibold text-left mb-1">{$i18n.t('Password')}</div>
 
@@ -186,6 +202,7 @@
 									required
 								/>
 							</div>
+							{/if}
 						</div>
 
 						<div class="mt-5">
@@ -193,7 +210,7 @@
 								class=" bg-gray-900 hover:bg-gray-800 w-full rounded-2xl text-white font-semibold text-sm py-3 transition"
 								type="submit"
 							>
-								{mode === 'signin' ? $i18n.t('Sign in') : $i18n.t('Create Account')}
+								{mode === 'signin' ? $i18n.t('Sign in') : mode === 'signup' ? $i18n.t('Create Account') : $i18n.t('Reset Password')}
 							</button>
 
 							{#if $config?.features.enable_signup}
@@ -216,6 +233,19 @@
 										{mode === 'signin' ? $i18n.t('Sign up') : $i18n.t('Sign in')}
 									</button>
 								</div>
+							{/if}
+							{#if mode === 'signin'}
+							<div class=" mt-4 text-sm text-center">
+								<button
+								class=" font-medium underline"
+										type="button"
+										on:click={() => {
+											mode  = 'forgetpassword'
+										}}
+								>
+									Forget Password
+								</button>
+							</div>
 							{/if}
 						</div>
 					</form>

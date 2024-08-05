@@ -17,6 +17,7 @@
 	} from '$lib/apis/auths';
 	import Switch from '$lib/components/common/Switch.svelte';
 	import { onMount, getContext } from 'svelte';
+	import {showSettings} from '$lib/stores'
 
 	const i18n = getContext('i18n');
 
@@ -34,6 +35,7 @@
 		} else {
 			toast.error(i18n.t('Failed to update settings'));
 		}
+		showSettings.set(false)
 	};
 
 	onMount(async () => {

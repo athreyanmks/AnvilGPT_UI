@@ -8,6 +8,8 @@ import logging
 from utils.utils import decode_token
 from utils.misc import get_gravatar_url
 
+
+
 from apps.webui.internal.db import DB
 
 import json
@@ -30,6 +32,7 @@ class Document(Model):
     content = TextField(null=True)
     user_id = CharField()
     timestamp = BigIntegerField()
+    vector_ids = TextField()
 
     class Meta:
         database = DB
@@ -43,6 +46,7 @@ class DocumentModel(BaseModel):
     content: Optional[str] = None
     user_id: str
     timestamp: int  # timestamp in epoch
+    vector_ids: str
 
 
 ####################
@@ -58,6 +62,7 @@ class DocumentResponse(BaseModel):
     content: Optional[dict] = None
     user_id: str
     timestamp: int  # timestamp in epoch
+    vector_ids: str
 
 
 class DocumentUpdateForm(BaseModel):
@@ -69,6 +74,7 @@ class DocumentForm(DocumentUpdateForm):
     collection_name: str
     filename: str
     content: Optional[str] = None
+    vector_ids: str
 
 
 class DocumentsTable:
@@ -88,7 +94,7 @@ class DocumentsTable:
         )
 
         try:
-            # print("Here6")
+            print("Here6")
             result = Document.create(**document.model_dump())
             # print(result)
             # print("########")
@@ -118,7 +124,7 @@ class DocumentsTable:
             document = Document.select().where((Document.name == name) & (Document.user_id == user_id))
             # .where()
             # print("Here5")
-            print(len(document))
+            # print(len(document))
             if len(document) == 0:
                 return None
             else:
@@ -140,11 +146,14 @@ class DocumentsTable:
         ]
     
     def get_docs_of_user(self, user_id: str) -> List[DocumentModel]:
-        try:
-            return [
+        try: 
+            print(Document.select().where(Document.user_id == user_id))
+            docs = [
             DocumentModel(**model_to_dict(doc))
             for doc in Document.select().where(Document.user_id == user_id)
             ]
+            print(docs)
+            return docs
 
         except:
             return None
@@ -238,13 +247,17 @@ class DocumentsTable:
         except:
             return False
 
-    def delete_doc_by_name_and_user(self, name: str, user_id: str) -> bool:
+    def delete_doc_by_name_and_user(self, name: str, user_id: str) -> str:
         try:
+            doc_to_be_deleted = [DocumentModel(**model_to_dict(doc))
+            for doc in Document.select().where((Document.name == name) & (Document.user_id == user_id))][0]
             query = Document.delete().where((Document.name == name) & (Document.user_id == user_id))
             query.execute()  # Remove the rows, return number of rows removed.
-
-            return True
+            # doc_details = {}
+            # doc_details['collection_name'] = doc_to_be_deleted.collection_name
+            # doc_details['collection_name'] = doc_to_be_deleted.vector_ids
+            return doc_to_be_deleted
         except:
-            return False
+            return None
 
 Documents = DocumentsTable(DB)

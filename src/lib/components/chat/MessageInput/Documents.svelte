@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 
-	import { documents } from '$lib/stores';
+	import { documents, created_collections } from '$lib/stores';
 	import { removeFirstHashWord, isValidHttpUrl } from '$lib/utils';
 	import { tick, getContext } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import { Result } from 'postcss';
 
 	const i18n = getContext('i18n');
 
@@ -15,10 +16,14 @@
 
 	let filteredItems = [];
 	let filteredDocs = [];
+	let filteredCollections = [];
 
 	let collections = [];
 
-	$: collections = [
+	$: {
+		// console.log($documents)
+		// console.log($created_collections)
+		collections = [
 		...($documents.length > 0
 			? [
 					{
@@ -29,33 +34,61 @@
 					}
 			  ]
 			: []),
-		...$documents
-			.reduce((a, e, i, arr) => {
-				return [...new Set([...a, ...(e?.content?.tags ?? []).map((tag) => tag.name)])];
-			}, [])
-			.map((tag) => ({
-				name: tag,
-				type: 'collection',
-				collection_names: $documents
-					.filter((doc) => (doc?.content?.tags ?? []).map((tag) => tag.name).includes(tag))
-					.map((doc) => doc.collection_name)
-			}))
+		// ...$documents
+		// 	.reduce((a, e, i, arr) => {
+		// 		return [...new Set([...a, ...(e?.content?.tags ?? []).map((tag) => tag.name)])];
+		// 	}, [])
+		// 	.map((tag) => ({
+		// 		name: tag,
+		// 		type: 'collection',
+		// 		collection_names: $documents
+		// 			.filter((doc) => (doc?.content?.tags ?? []).map((tag) => tag.name).includes(tag))
+		// 			.map((doc) => doc.collection_name)
+		// 	})),
+		// ...$created_collections
+		// 	.reduce((a) => {
+		// 		return [...new Set([...a])];
+		// 	}, [])
+		// 	.map((tag) => ({
+		// 		name: tag,
+		// 		type: 'collection',
+		// 		collection_names: $created_collections
+		// 			.map((doc) => doc.collection_name)
+		// 	})),	
 	];
+	// console.log(collections)
 
-	$: filteredCollections = collections
-		.filter((collection) => collection.name.includes(prompt.split(' ')?.at(0)?.substring(1) ?? ''))
-		.sort((a, b) => a.name.localeCompare(b.name));
+		}
 
+	// $: filteredCollections = collections
+	// 	.filter((collection) => collection.name.includes(prompt.split(' ')?.at(0)?.substring(1) ?? ''))
+	// 	.sort((a, b) => a.name.localeCompare(b.name));
+
+	$: {filteredCollections = $created_collections
+		.filter((collection) => collection.collection_name.includes(prompt.split(' ')?.at(0)?.substring(1) ?? ''))
+		.sort((a, b) => a.collection_name.localeCompare(b.collection_name))
+		// .map((cols) => {
+
+		// 		collection_name : cols.collection_name,
+		// 		type : "collection"
+
+		// },[]);	
+		console.log(filteredCollections)	
+	}
+		
 	$: filteredDocs = $documents
 		.filter((doc) => doc.name.includes(prompt.split(' ')?.at(0)?.substring(1) ?? ''))
 		.sort((a, b) => a.title.localeCompare(b.title));
+	
+	
 
-	$: filteredItems = [...filteredCollections, ...filteredDocs];
+	$: filteredItems = [...collections, ...filteredCollections, ...filteredDocs];
 
 	$: if (prompt) {
 		selectedIdx = 0;
 
 		console.log(filteredCollections);
+		console.log(filteredItems);
 	}
 
 	export const selectUp = () => {

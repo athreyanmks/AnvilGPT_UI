@@ -940,6 +940,7 @@ async def get_opensearch_xml():
     <Description>Search {WEBUI_NAME}</Description>
     <InputEncoding>UTF-8</InputEncoding>
     <Image width="16" height="16" type="image/x-icon">{WEBUI_URL}/favicon.png</Image>
+    <Image width="16" height="16" type="image/x-icon">{WEBUI_URL}/robotIcon.png</Image>
     <Url type="text/html" method="get" template="{WEBUI_URL}/?q={"{searchTerms}"}"/>
     <moz:SearchForm>{WEBUI_URL}</moz:SearchForm>
     </OpenSearchDescription>

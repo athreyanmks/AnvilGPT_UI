@@ -18,6 +18,7 @@
 	export let show = false;
 	let uploadDocInputElement: HTMLInputElement;
 	let inputFiles;
+	let collection_name : String;
 	let tags = [];
 
 	let doc = {
@@ -26,11 +27,13 @@
 		content: null
 	};
 
-	const uploadDoc = async (file) => {
-		const res = await uploadDocToVectorDB(localStorage.token, '', file).catch((error) => {
+	const uploadDoc = async (file,collection_name) => {
+		const res = await uploadDocToVectorDB(localStorage.token, collection_name, file).catch((error) => {
 			toast.error(error);
 			return null;
 		});
+
+		console.log("Here")
 
 		if (res) {
 			await createNewDoc(
@@ -39,6 +42,7 @@
 				res.filename,
 				transformFileName(res.filename),
 				res.filename,
+				res.vector_ids.toString(),
 				tags.length > 0
 					? {
 							tags: tags
@@ -60,12 +64,12 @@
 					SUPPORTED_FILE_TYPE.includes(file['type']) ||
 					SUPPORTED_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))
 				) {
-					uploadDoc(file);
+					uploadDoc(file,collection_name);
 				} else {
 					toast.error(
 						`Unknown File Type '${file['type']}', but accepting and treating as plain text`
 					);
-					uploadDoc(file);
+					uploadDoc(file,collection_name);
 				}
 			}
 
@@ -134,6 +138,7 @@
 							multiple
 						/>
 
+
 						<button
 							class="w-full text-sm font-medium py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-center rounded-xl"
 							type="button"
@@ -147,6 +152,19 @@
 								{$i18n.t('Click here to select documents.')}
 							{/if}
 						</button>
+					</div>
+
+					<div class="flex flex-col w-full">
+						<div class=" mb-1 text-xs text-gray-500">{$i18n.t('Collection')}</div>
+
+						<div class="flex-1">
+							<input
+							class="w-full rounded-xl py-2 px-4 text-sm dark:text-gray-300 dark:bg-gray-850 outline-none"
+							type="text"
+							bind:value ={collection_name}
+							autocomplete="on"
+							/>
+						</div>
 					</div>
 
 					<div class=" flex flex-col space-y-1.5">

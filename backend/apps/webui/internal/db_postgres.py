@@ -39,7 +39,7 @@ print(f"Connected to a {pg_db.__class__.__name__} database.")
 router = Router(
     pg_db,
     # migrate_dir=BACKEND_DIR / "apps" / "webui" / "internal" / "migrations",
-    migrate_dir="C:/Users/athre/Documents/Athreyan/Purdue/Summer/RCAC/Svelte_projects/temp_folder/open-webui/backend/apps/webui/internal/migrations",
+    migrate_dir="C:/Users/athre/Documents/Athreyan/Purdue/Summer/RCAC/Svelte_projects/AnvilGPT_UI/backend/apps/webui/internal/migrations",
     logger=log,
 )
 router.run()

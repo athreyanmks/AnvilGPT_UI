@@ -11,7 +11,7 @@
 	import { getOllamaVersion } from '$lib/apis/ollama';
 	import { getPrompts } from '$lib/apis/prompts';
 
-	import { getDocs } from '$lib/apis/documents';
+	import { getDocs, getCollections } from '$lib/apis/documents';
 	import { getAllChatTags } from '$lib/apis/chats';
 
 	import {
@@ -21,10 +21,11 @@
 		models,
 		prompts,
 		documents,
-		tags,
+		created_collections,
 		banners,
 		showChangelog,
-		config
+		config,
+		tags
 	} from '$lib/stores';
 	import { REQUIRED_OLLAMA_VERSION, WEBUI_API_BASE_URL } from '$lib/constants';
 	import { compareVersion } from '$lib/utils';
@@ -96,6 +97,9 @@
 				})(),
 				(async () => {
 					documents.set(await getDocs(localStorage.token));
+				})(),
+				(async () => {
+					created_collections.set(await getCollections(localStorage.token))
 				})(),
 				(async () => {
 					banners.set(await getBanners(localStorage.token));

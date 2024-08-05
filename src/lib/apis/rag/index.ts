@@ -1,4 +1,5 @@
 import { RAG_API_BASE_URL } from '$lib/constants';
+// import { List } from 'bits-ui/dist/bits/tabs';
 
 export const getRAGConfig = async (token: string) => {
 	let error = null;
@@ -173,6 +174,40 @@ export const uploadDocToVectorDB = async (token: string, collection_name: string
 
 	const res = await fetch(`${RAG_API_BASE_URL}/doc`, {
 		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			authorization: `Bearer ${token}`
+		},
+		body: data
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			error = err.detail;
+			console.log(err);
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+	console.log(res.vector_ids.toString())
+
+	return res;
+};
+
+export const deleteDocFromVectorDB = async (token: string, collection_name: string, vector_ids: string) => {
+	const data = new FormData();
+	data.append('collection_name', collection_name);
+	data.append('vector_ids', vector_ids);
+
+
+	let error = null;
+
+	const res = await fetch(`${RAG_API_BASE_URL}/delete/doc`, {
+		method: 'DELETE',
 		headers: {
 			Accept: 'application/json',
 			authorization: `Bearer ${token}`

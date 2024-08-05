@@ -264,11 +264,11 @@
 					}, 0);
 				}}
 			>
-				<div class="self-center mx-1.5">
+				<div class="self-center mx-2">
 					<img
 						crossorigin="anonymous"
 						src="{WEBUI_BASE_URL}/static/favicon.png"
-						class=" size-6 -translate-x-1.5 rounded-full"
+						class=" size-6 -translate-x-1.5"
 						alt="logo"
 					/>
 				</div>
