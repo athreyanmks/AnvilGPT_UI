@@ -7,6 +7,7 @@ from pydantic import BaseModel
 import json
 
 from apps.webui.models.documents import (
+<<<<<<<< HEAD:backend/apps/web/temp/routers/documents.py
     Documents,
     DocumentForm,
     DocumentUpdateForm,
@@ -15,6 +16,8 @@ from apps.webui.models.documents import (
 )
 
 from apps.webui.models.collections import (
+========
+>>>>>>>> d3146d20ad74c020855142b2bf7e371f981ec098:backend/apps/webui/routers/documents.py
     Documents,
     DocumentForm,
     DocumentUpdateForm,
@@ -22,7 +25,7 @@ from apps.webui.models.collections import (
     DocumentResponse,
 )
 
-from utils.utils import get_current_user, get_admin_user
+from utils.utils import get_verified_user, get_admin_user
 from constants import ERROR_MESSAGES
 
 router = APIRouter()
@@ -33,6 +36,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[DocumentResponse])
+<<<<<<<< HEAD:backend/apps/web/temp/routers/documents.py
 async def get_documents(user=Depends(get_current_user)):
     # doc = Documents.get_docs_of_user(user.id)
 
@@ -49,6 +53,9 @@ async def get_documents(user=Depends(get_current_user)):
     #         detail=ERROR_MESSAGES.NOT_FOUND,
     #     )
 
+========
+async def get_documents(user=Depends(get_verified_user)):
+>>>>>>>> d3146d20ad74c020855142b2bf7e371f981ec098:backend/apps/webui/routers/documents.py
     docs = [
         DocumentResponse(
             **{
@@ -105,8 +112,8 @@ async def create_new_doc(form_data: DocumentForm, user=Depends(get_current_user)
 ############################
 
 
-@router.get("/name/{name}", response_model=Optional[DocumentResponse])
-async def get_doc_by_name(name: str, user=Depends(get_current_user)):
+@router.get("/doc", response_model=Optional[DocumentResponse])
+async def get_doc_by_name(name: str, user=Depends(get_verified_user)):
     doc = Documents.get_doc_by_name(name)
 
     if doc:
@@ -137,9 +144,15 @@ class TagDocumentForm(BaseModel):
     tags: List[dict]
 
 
+<<<<<<<< HEAD:backend/apps/web/temp/routers/documents.py
 @router.post("/name/{name}/tags", response_model=Optional[DocumentResponse])
 async def tag_doc_by_name(form_data: TagDocumentForm, user=Depends(get_current_user)):
     doc = Documents.update_doc_content_by_name_and_user(form_data.name,user.id, {"tags": form_data.tags})
+========
+@router.post("/doc/tags", response_model=Optional[DocumentResponse])
+async def tag_doc_by_name(form_data: TagDocumentForm, user=Depends(get_verified_user)):
+    doc = Documents.update_doc_content_by_name(form_data.name, {"tags": form_data.tags})
+>>>>>>>> d3146d20ad74c020855142b2bf7e371f981ec098:backend/apps/webui/routers/documents.py
 
     if doc:
         return DocumentResponse(
@@ -160,9 +173,15 @@ async def tag_doc_by_name(form_data: TagDocumentForm, user=Depends(get_current_u
 ############################
 
 
-@router.post("/name/{name}/update", response_model=Optional[DocumentResponse])
+@router.post("/doc/update", response_model=Optional[DocumentResponse])
 async def update_doc_by_name(
+<<<<<<<< HEAD:backend/apps/web/temp/routers/documents.py
     name: str, form_data: DocumentUpdateForm, user=Depends(get_current_user)
+========
+    name: str,
+    form_data: DocumentUpdateForm,
+    user=Depends(get_admin_user),
+>>>>>>>> d3146d20ad74c020855142b2bf7e371f981ec098:backend/apps/webui/routers/documents.py
 ):
     # doc = Documents.update_doc_by_name(name, form_data)
     doc = Documents.update_doc_by_name_and_user(name, user.id, form_data)
@@ -185,7 +204,13 @@ async def update_doc_by_name(
 ############################
 
 
+<<<<<<<< HEAD:backend/apps/web/temp/routers/documents.py
 @router.delete("/name/{name}/delete", response_model=bool)
 async def delete_doc_by_name(name: str, user=Depends(get_current_user)):
     result = Documents.delete_doc_by_name_and_user(name, user.id)
+========
+@router.delete("/doc/delete", response_model=bool)
+async def delete_doc_by_name(name: str, user=Depends(get_admin_user)):
+    result = Documents.delete_doc_by_name(name)
+>>>>>>>> d3146d20ad74c020855142b2bf7e371f981ec098:backend/apps/webui/routers/documents.py
     return result

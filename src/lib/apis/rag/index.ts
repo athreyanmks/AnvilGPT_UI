@@ -33,6 +33,11 @@ type ChunkConfigForm = {
 	chunk_overlap: number;
 };
 
+type ContentExtractConfigForm = {
+	engine: string;
+	tika_server_url: string | null;
+};
+
 type YoutubeConfigForm = {
 	language: string[];
 	translation?: string | null;
@@ -41,6 +46,7 @@ type YoutubeConfigForm = {
 type RAGConfigForm = {
 	pdf_extract_images?: boolean;
 	chunk?: ChunkConfigForm;
+	content_extraction?: ContentExtractConfigForm;
 	web_loader_ssl_verification?: boolean;
 	youtube?: YoutubeConfigForm;
 };
@@ -155,6 +161,37 @@ export const updateQuerySettings = async (token: string, settings: QuerySettings
 		.catch((err) => {
 			console.log(err);
 			error = err.detail;
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
+
+export const processDocToVectorDB = async (token: string, file_id: string) => {
+	let error = null;
+
+	const res = await fetch(`${RAG_API_BASE_URL}/process/doc`, {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			authorization: `Bearer ${token}`
+		},
+		body: JSON.stringify({
+			file_id: file_id
+		})
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			error = err.detail;
+			console.log(err);
 			return null;
 		});
 
@@ -423,7 +460,7 @@ export const resetUploadDir = async (token: string) => {
 export const resetVectorDB = async (token: string) => {
 	let error = null;
 
-	const res = await fetch(`${RAG_API_BASE_URL}/reset`, {
+	const res = await fetch(`${RAG_API_BASE_URL}/reset/db`, {
 		method: 'GET',
 		headers: {
 			Accept: 'application/json',

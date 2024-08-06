@@ -16,6 +16,7 @@
 	const i18n = getContext('i18n');
 
 	export let show = false;
+	export let uploadDoc: Function;
 	let uploadDocInputElement: HTMLInputElement;
 	let inputFiles;
 	let collection_name : String;
@@ -27,7 +28,7 @@
 		content: null
 	};
 
-	const uploadDoc = async (file,collection_name) => {
+	const uploadDoc = async (file, tags,collection_name) => {
 		const res = await uploadDocToVectorDB(localStorage.token, collection_name, file).catch((error) => {
 			toast.error(error);
 			return null;
@@ -64,12 +65,12 @@
 					SUPPORTED_FILE_TYPE.includes(file['type']) ||
 					SUPPORTED_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))
 				) {
-					uploadDoc(file,collection_name);
+					uploadDoc(file, tags,collection_name);
 				} else {
 					toast.error(
 						`Unknown File Type '${file['type']}', but accepting and treating as plain text`
 					);
-					uploadDoc(file,collection_name);
+					uploadDoc(file, tags,collection_name);
 				}
 			}
 

@@ -22,10 +22,10 @@ export const theme = writable('system');
 export const chatId = writable('');
 
 export const chats = writable([]);
+export const pinnedChats = writable([]);
 export const tags = writable([]);
-export const models: Writable<Model[]> = writable([]);
 
-export const modelfiles = writable([]);
+export const models: Writable<Model[]> = writable([]);
 export const prompts: Writable<Prompt[]> = writable([]);
 export const documents = writable([
 	{
@@ -67,6 +67,7 @@ export const showSidebar = writable(false);
 export const showSettings = writable(false);
 export const showArchivedChats = writable(false);
 export const showChangelog = writable(false);
+export const showCallOverlay = writable(false);
 
 export type Model = OpenAIModel | OllamaModel;
 
@@ -121,6 +122,8 @@ type Settings = {
 	top_k?: string;
 	top_p?: string;
 	num_ctx?: string;
+	num_batch?: string;
+	num_keep?: string;
 	options?: ModelOptions;
 };
 
@@ -151,21 +154,34 @@ type Prompt = {
 	timestamp: number;
 };
 
+type Document = {
+	collection_name: string;
+	filename: string;
+	name: string;
+	title: string;
+};
+
 type Config = {
 	status: boolean;
 	name: string;
 	version: string;
 	default_locale: string;
-	default_models: string[];
+	default_models: string;
 	default_prompt_suggestions: PromptSuggestion[];
 	features: {
 		auth: boolean;
 		auth_trusted_header: boolean;
 		enable_signup: boolean;
+		enable_login_form: boolean;
 		enable_web_search?: boolean;
 		enable_image_generation: boolean;
 		enable_admin_export: boolean;
 		enable_community_sharing: boolean;
+	};
+	oauth: {
+		providers: {
+			[key: string]: string;
+		};
 	};
 };
 

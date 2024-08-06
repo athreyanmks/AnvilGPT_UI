@@ -15,12 +15,13 @@
 
 	const dispatch = createEventDispatcher();
 
-	import { config, models, settings } from '$lib/stores';
+	import { config, models, settings, user } from '$lib/stores';
 	import { synthesizeOpenAISpeech } from '$lib/apis/audio';
 	import { imageGenerations } from '$lib/apis/images';
 	import {
 		approximateToHumanReadable,
 		extractSentences,
+		replaceTokens,
 		revertSanitizedResponseContent,
 		sanitizeResponseContent
 	} from '$lib/utils';
@@ -36,6 +37,7 @@
 	import CitationsModal from '$lib/components/chat/Messages/CitationsModal.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import WebSearchResults from './ResponseMessage/WebSearchResults.svelte';
+	import Sparkles from '$lib/components/icons/Sparkles.svelte';
 
 	export let message;
 	export let siblings;
@@ -53,6 +55,7 @@
 	export let copyToClipboard: Function;
 	export let continueGeneration: Function;
 	export let regenerateResponse: Function;
+	export let chatActionHandler: Function;
 
 	let model = null;
 	$: model = $models.find((m) => m.id === message.model);
@@ -74,7 +77,9 @@
 
 	let selectedCitation = null;
 
-	$: tokens = marked.lexer(sanitizeResponseContent(message?.content));
+	$: tokens = marked.lexer(
+		replaceTokens(sanitizeResponseContent(message?.content), model?.name, $user?.name)
+	);
 
 	const renderer = new marked.Renderer();
 
@@ -149,7 +154,10 @@
 			}
 			tooltipInstance = tippy(`#info-${message.id}`, {
 				content: `<span class="text-xs" id="tooltip-${message.id}">${tooltipContent}</span>`,
-				allowHTML: true
+				allowHTML: true,
+				theme: 'dark',
+				arrow: false,
+				offset: [0, 4]
 			});
 		}
 	};
@@ -167,7 +175,10 @@
 					delimiters: [
 						{ left: '$$', right: '$$', display: false },
 						{ left: '$ ', right: ' $', display: false },
+						{ left: '\\pu{', right: '}', display: false },
+						{ left: '\\ce{', right: '}', display: false },
 						{ left: '\\(', right: '\\)', display: false },
+						{ left: '( ', right: ' )', display: false },
 						{ left: '\\[', right: '\\]', display: false },
 						{ left: '[ ', right: ' ]', display: false }
 					],
@@ -188,10 +199,6 @@
 
 				if (Object.keys(sentencesAudio).length - 1 === idx) {
 					speaking = null;
-
-					if ($settings.conversationMode) {
-						document.getElementById('voice-input-button')?.click();
-					}
 				}
 
 				res(e);
@@ -211,82 +218,105 @@
 			speaking = null;
 			speakingIdx = null;
 		} else {
-			speaking = true;
+			if ((message?.content ?? '').trim() !== '') {
+				speaking = true;
 
-			if ($settings?.audio?.TTSEngine === 'openai') {
-				loadingSpeech = true;
+				if ($config.audio.tts.engine !== '') {
+					loadingSpeech = true;
 
-				const sentences = extractSentences(message.content).reduce((mergedTexts, currentText) => {
-					const lastIndex = mergedTexts.length - 1;
-					if (lastIndex >= 0) {
-						const previousText = mergedTexts[lastIndex];
-						const wordCount = previousText.split(/\s+/).length;
-						if (wordCount < 2) {
-							mergedTexts[lastIndex] = previousText + ' ' + currentText;
+					const sentences = extractSentences(message.content).reduce((mergedTexts, currentText) => {
+						const lastIndex = mergedTexts.length - 1;
+						if (lastIndex >= 0) {
+							const previousText = mergedTexts[lastIndex];
+							const wordCount = previousText.split(/\s+/).length;
+							if (wordCount < 2) {
+								mergedTexts[lastIndex] = previousText + ' ' + currentText;
+							} else {
+								mergedTexts.push(currentText);
+							}
 						} else {
 							mergedTexts.push(currentText);
 						}
+						return mergedTexts;
+					}, []);
+
+					console.log(sentences);
+
+					if (sentences.length > 0) {
+						sentencesAudio = sentences.reduce((a, e, i, arr) => {
+							a[i] = null;
+							return a;
+						}, {});
+
+						let lastPlayedAudioPromise = Promise.resolve(); // Initialize a promise that resolves immediately
+
+						for (const [idx, sentence] of sentences.entries()) {
+							const res = await synthesizeOpenAISpeech(
+								localStorage.token,
+								$settings?.audio?.tts?.defaultVoice === $config.audio.tts.voice
+									? $settings?.audio?.tts?.voice ?? $config?.audio?.tts?.voice
+									: $config?.audio?.tts?.voice,
+								sentence
+							).catch((error) => {
+								toast.error(error);
+
+								speaking = null;
+								loadingSpeech = false;
+
+								return null;
+							});
+
+							if (res) {
+								const blob = await res.blob();
+								const blobUrl = URL.createObjectURL(blob);
+								const audio = new Audio(blobUrl);
+								sentencesAudio[idx] = audio;
+								loadingSpeech = false;
+								lastPlayedAudioPromise = lastPlayedAudioPromise.then(() => playAudio(idx));
+							}
+						}
 					} else {
-						mergedTexts.push(currentText);
-					}
-					return mergedTexts;
-				}, []);
-
-				console.log(sentences);
-
-				sentencesAudio = sentences.reduce((a, e, i, arr) => {
-					a[i] = null;
-					return a;
-				}, {});
-
-				let lastPlayedAudioPromise = Promise.resolve(); // Initialize a promise that resolves immediately
-
-				for (const [idx, sentence] of sentences.entries()) {
-					const res = await synthesizeOpenAISpeech(
-						localStorage.token,
-						$settings?.audio?.speaker,
-						sentence,
-						$settings?.audio?.model
-					).catch((error) => {
-						toast.error(error);
-
 						speaking = null;
 						loadingSpeech = false;
-
-						return null;
-					});
-
-					if (res) {
-						const blob = await res.blob();
-						const blobUrl = URL.createObjectURL(blob);
-						const audio = new Audio(blobUrl);
-						sentencesAudio[idx] = audio;
-						loadingSpeech = false;
-						lastPlayedAudioPromise = lastPlayedAudioPromise.then(() => playAudio(idx));
 					}
+				} else {
+					let voices = [];
+					const getVoicesLoop = setInterval(async () => {
+						voices = await speechSynthesis.getVoices();
+						if (voices.length > 0) {
+							clearInterval(getVoicesLoop);
+
+							const voice =
+								voices
+									?.filter(
+										(v) =>
+											v.voiceURI === ($settings?.audio?.tts?.voice ?? $config?.audio?.tts?.voice)
+									)
+									?.at(0) ?? undefined;
+
+							console.log(voice);
+
+							const speak = new SpeechSynthesisUtterance(message.content);
+
+							console.log(speak);
+
+							speak.onend = () => {
+								speaking = null;
+								if ($settings.conversationMode) {
+									document.getElementById('voice-input-button')?.click();
+								}
+							};
+
+							if (voice) {
+								speak.voice = voice;
+							}
+
+							speechSynthesis.speak(speak);
+						}
+					}, 100);
 				}
 			} else {
-				let voices = [];
-				const getVoicesLoop = setInterval(async () => {
-					voices = await speechSynthesis.getVoices();
-					if (voices.length > 0) {
-						clearInterval(getVoicesLoop);
-
-						const voice =
-							voices?.filter((v) => v.name === $settings?.audio?.speaker)?.at(0) ?? undefined;
-
-						const speak = new SpeechSynthesisUtterance(message.content);
-
-						speak.onend = () => {
-							speaking = null;
-							if ($settings.conversationMode) {
-								document.getElementById('voice-input-button')?.click();
-							}
-						};
-						speak.voice = voice;
-						speechSynthesis.speak(speak);
-					}
-				}, 100);
+				toast.error($i18n.t('No content to speak'));
 			}
 		}
 	};
@@ -372,7 +402,7 @@
 	>
 		<ProfileImage
 			src={model?.info?.meta?.profile_image_url ??
-				($i18n.language === 'dg-DG' ? `/doge.png` : `${WEBUI_BASE_URL}/static/robotIcon.png`)}
+				($i18n.language === 'dg-DG' ? `/doge.png` : `${WEBUI_BASE_URL}/static/favicon.png`)}
 		/>
 
 		<div class="w-full overflow-hidden pl-1">
@@ -404,26 +434,29 @@
 				class="prose chat-{message.role} w-full max-w-full dark:prose-invert prose-headings:my-0 prose-headings:-mb-4 prose-p:m-0 prose-p:-mb-6 prose-pre:my-0 prose-table:my-0 prose-blockquote:my-0 prose-img:my-0 prose-ul:-my-4 prose-ol:-my-4 prose-li:-my-3 prose-ul:-mb-6 prose-ol:-mb-8 prose-ol:p-0 prose-li:-mb-4 whitespace-pre-line"
 			>
 				<div>
-					{#if message?.status}
-						<div class="flex items-center gap-2 pt-1 pb-1">
-							{#if message?.status?.done === false}
+					{#if (message?.statusHistory ?? [...(message?.status ? [message?.status] : [])]).length > 0}
+						{@const status = (
+							message?.statusHistory ?? [...(message?.status ? [message?.status] : [])]
+						).at(-1)}
+						<div class="flex items-center gap-2 pt-0.5 pb-1">
+							{#if status.done === false}
 								<div class="">
 									<Spinner className="size-4" />
 								</div>
 							{/if}
 
-							{#if message?.status?.action === 'web_search' && message?.status?.urls}
-								<WebSearchResults urls={message?.status?.urls}>
+							{#if status?.action === 'web_search' && status?.urls}
+								<WebSearchResults {status}>
 									<div class="flex flex-col justify-center -space-y-0.5">
 										<div class="text-base line-clamp-1 text-wrap">
-											{message.status.description}
+											{status?.description}
 										</div>
 									</div>
 								</WebSearchResults>
 							{:else}
 								<div class="flex flex-col justify-center -space-y-0.5">
 									<div class=" text-gray-500 dark:text-gray-500 text-base line-clamp-1 text-wrap">
-										{message.status.description}
+										{status?.description}
 									</div>
 								</div>
 							{/if}
@@ -440,6 +473,18 @@
 								on:input={(e) => {
 									e.target.style.height = '';
 									e.target.style.height = `${e.target.scrollHeight}px`;
+								}}
+								on:keydown={(e) => {
+									if (e.key === 'Escape') {
+										document.getElementById('close-edit-message-button')?.click();
+									}
+
+									const isCmdOrCtrlPressed = e.metaKey || e.ctrlKey;
+									const isEnterPressed = e.key === 'Enter';
+
+									if (isCmdOrCtrlPressed && isEnterPressed) {
+										document.getElementById('save-edit-message-button')?.click();
+									}
 								}}
 							/>
 
@@ -526,6 +571,11 @@
 											const metadata = citation.metadata?.[index];
 											const id = metadata?.source ?? 'N/A';
 											let source = citation?.source;
+
+											if (metadata?.name) {
+												source = { ...source, name: metadata.name };
+											}
+
 											// Check if ID looks like a URL
 											if (id.startsWith('http://') || id.startsWith('https://')) {
 												source = { name: id };
@@ -757,7 +807,7 @@
 										</Tooltip>
 
 										{#if $config?.features.enable_image_generation && !readOnly}
-											<Tooltip content="Generate Image" placement="bottom">
+											<Tooltip content={$i18n.t('Generate Image')} placement="bottom">
 												<button
 													class="{isLastMessage
 														? 'visible'
@@ -857,8 +907,8 @@
 												<button
 													class="{isLastMessage
 														? 'visible'
-														: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg {message
-														?.annotation?.rating === 1
+														: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg {(message
+														?.annotation?.rating ?? null) === 1
 														? 'bg-gray-100 dark:bg-gray-800'
 														: ''} dark:hover:text-white hover:text-black transition"
 													on:click={() => {
@@ -892,8 +942,8 @@
 												<button
 													class="{isLastMessage
 														? 'visible'
-														: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg {message
-														?.annotation?.rating === -1
+														: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg {(message
+														?.annotation?.rating ?? null) === -1
 														? 'bg-gray-100 dark:bg-gray-800'
 														: ''} dark:hover:text-white hover:text-black transition"
 													on:click={() => {
@@ -921,67 +971,95 @@
 													>
 												</button>
 											</Tooltip>
-										{/if}
 
-										{#if isLastMessage && !readOnly}
-											<Tooltip content={$i18n.t('Continue Response')} placement="bottom">
-												<button
-													type="button"
-													class="{isLastMessage
-														? 'visible'
-														: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition regenerate-response-button"
-													on:click={() => {
-														continueGeneration();
-													}}
-												>
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														fill="none"
-														viewBox="0 0 24 24"
-														stroke-width="2.3"
-														stroke="currentColor"
-														class="w-4 h-4"
+											{#if isLastMessage}
+												<Tooltip content={$i18n.t('Continue Response')} placement="bottom">
+													<button
+														type="button"
+														class="{isLastMessage
+															? 'visible'
+															: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition regenerate-response-button"
+														on:click={() => {
+															continueGeneration();
+														}}
 													>
-														<path
-															stroke-linecap="round"
-															stroke-linejoin="round"
-															d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-														/>
-														<path
-															stroke-linecap="round"
-															stroke-linejoin="round"
-															d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z"
-														/>
-													</svg>
-												</button>
-											</Tooltip>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															fill="none"
+															viewBox="0 0 24 24"
+															stroke-width="2.3"
+															stroke="currentColor"
+															class="w-4 h-4"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+															/>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z"
+															/>
+														</svg>
+													</button>
+												</Tooltip>
 
-											<Tooltip content={$i18n.t('Regenerate')} placement="bottom">
-												<button
-													type="button"
-													class="{isLastMessage
-														? 'visible'
-														: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition regenerate-response-button"
-													on:click={() => {
-														regenerateResponse(message);
-													}}
-												>
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														fill="none"
-														viewBox="0 0 24 24"
-														stroke-width="2.3"
-														stroke="currentColor"
-														class="w-4 h-4"
+												<Tooltip content={$i18n.t('Regenerate')} placement="bottom">
+													<button
+														type="button"
+														class="{isLastMessage
+															? 'visible'
+															: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition regenerate-response-button"
+														on:click={() => {
+															showRateComment = false;
+															regenerateResponse(message);
+														}}
 													>
-														<path
-															stroke-linecap="round"
-															stroke-linejoin="round"
-															d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-														/>
-													</svg>
-												</button>
-											</Tooltip>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															fill="none"
+															viewBox="0 0 24 24"
+															stroke-width="2.3"
+															stroke="currentColor"
+															class="w-4 h-4"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+															/>
+														</svg>
+													</button>
+												</Tooltip>
+
+												{#each model?.actions ?? [] as action}
+													<Tooltip content={action.name} placement="bottom">
+														<button
+															type="button"
+															class="{isLastMessage
+																? 'visible'
+																: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition regenerate-response-button"
+															on:click={() => {
+																dispatch('action', action.id);
+															}}
+														>
+															{#if action.icon_url}
+																<img
+																	src={action.icon_url}
+																	class="w-4 h-4 {action.icon_url.includes('svg')
+																		? 'dark:invert-[80%]'
+																		: ''}"
+																	style="fill: currentColor;"
+																	alt={action.name}
+																/>
+															{:else}
+																<Sparkles strokeWidth="2.1" className="size-4" />
+															{/if}
+														</button>
+													</Tooltip>
+												{/each}
+											{/if}
 										{/if}
 									{/if}
 								</div>

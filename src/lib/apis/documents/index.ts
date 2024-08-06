@@ -113,7 +113,10 @@ export const getCollections = async (token: string = '') => {
 export const getDocByName = async (token: string, name: string) => {
 	let error = null;
 
-	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/name/${name}`, {
+	const searchParams = new URLSearchParams();
+	searchParams.append('name', name);
+
+	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/docs?${searchParams.toString()}`, {
 		method: 'GET',
 		headers: {
 			Accept: 'application/json',
@@ -150,7 +153,10 @@ type DocUpdateForm = {
 export const updateDocByName = async (token: string, name: string, form: DocUpdateForm) => {
 	let error = null;
 
-	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/name/${name}/update`, {
+	const searchParams = new URLSearchParams();
+	searchParams.append('name', name);
+
+	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/doc/update?${searchParams.toString()}`, {
 		method: 'POST',
 		headers: {
 			Accept: 'application/json',
@@ -191,7 +197,10 @@ type TagDocForm = {
 export const tagDocByName = async (token: string, name: string, form: TagDocForm) => {
 	let error = null;
 
-	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/name/${name}/tags`, {
+	const searchParams = new URLSearchParams();
+	searchParams.append('name', name);
+
+	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/doc/tags?${searchParams.toString()}`, {
 		method: 'POST',
 		headers: {
 			Accept: 'application/json',
@@ -227,7 +236,10 @@ export const tagDocByName = async (token: string, name: string, form: TagDocForm
 export const deleteDocByName = async (token: string, name: string) => {
 	let error = null;
 
-	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/name/${name}/delete`, {
+	const searchParams = new URLSearchParams();
+	searchParams.append('name', name);
+
+	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/doc/delete?${searchParams.toString()}`, {
 		method: 'DELETE',
 		headers: {
 			Accept: 'application/json',

@@ -4,21 +4,22 @@
 	const { saveAs } = fileSaver;
 
 	import { onMount, getContext } from 'svelte';
-	import { WEBUI_NAME, documents, collection_filtered_documents } from '$lib/stores';
+	import { WEBUI_NAME, documents, showSidebar, collection_filtered_documents } from '$lib/stores';
 	import { createNewDoc, deleteDocByName, getDocs } from '$lib/apis/documents';
 
 	import { SUPPORTED_FILE_TYPE, SUPPORTED_FILE_EXTENSIONS } from '$lib/constants';
-	import { uploadDocToVectorDB, deleteDocFromVectorDB } from '$lib/apis/rag';
-	import { transformFileName } from '$lib/utils';
+	import { processDocToVectorDB, uploadDocToVectorDB, deleteDocFromVectorDB } from '$lib/apis/rag';
+	import { blobToFile, transformFileName } from '$lib/utils';
 	// import collection_filtered_documents from '$lib/components/workspace/CollectionFilter.svelte'
 
 	import Checkbox from '$lib/components/common/Checkbox.svelte';
 
 	import EditDocModal from '$lib/components/documents/EditDocModal.svelte';
 	import AddFilesPlaceholder from '$lib/components/AddFilesPlaceholder.svelte';
-	import SettingsModal from '$lib/components/documents/SettingsModal.svelte';
 	import AddDocModal from '$lib/components/documents/AddDocModal.svelte';
 	import CollectionFilter from './CollectionFilter.svelte';
+	import { transcribeAudio } from '$lib/apis/audio';
+	import { uploadFile } from '$lib/apis/files';
 
 	const i18n = getContext('i18n');
 
@@ -55,13 +56,27 @@
 		await documents.set(await getDocs(localStorage.token));
 	};
 
-	const uploadDoc = async (file) => {
-		const res = await uploadDocToVectorDB(localStorage.token, '', file).catch((error) => {
+	const uploadDoc = async (file, tags?: object) => {
+		console.log(file);
+		// Check if the file is an audio file and transcribe/convert it to text file
+		if (['audio/mpeg', 'audio/wav'].includes(file['type'])) {
+			const transcribeRes = await transcribeAudio(localStorage.token, file).catch((error) => {
+				toast.error(error);
+				return null;
+			});
+
+			if (transcribeRes) {
+				console.log(transcribeRes);
+				const blob = new Blob([transcribeRes.text], { type: 'text/plain' });
+				file = blobToFile(blob, `${file.name}.txt`);
+			}
+		}
+
+		// Upload the file to the server
+		const uploadedFile = await uploadFile(localStorage.token, file).catch((error) => {
 			toast.error(error);
 			return null;
 		});
-		// console.log("Hereeeeeeeeeeeee")
-		// console.log(res.vector_ids.toString())
 
 		if (res) {
 			await createNewDoc(
@@ -71,6 +86,11 @@
 				transformFileName(res.filename),
 				res.filename,
 				res.vector_ids.toString(),
+				tags?.length > 0
+					? {
+							tags: tags
+					  }
+					: null
 			).catch((error) => {
 				toast.error(error);
 				return null;
@@ -171,12 +191,14 @@
 
 {#if dragged}
 	<div
-		class="fixed w-full h-full flex z-50 touch-none pointer-events-none"
+		class="fixed {$showSidebar
+			? 'left-0 md:left-[260px] md:w-[calc(100%-260px)]'
+			: 'left-0'}  w-full h-full flex z-50 touch-none pointer-events-none"
 		id="dropzone"
 		role="region"
 		aria-label="Drag and Drop Container"
 	>
-		<div class="absolute rounded-xl w-full h-full backdrop-blur bg-gray-800/40 flex justify-center">
+		<div class="absolute w-full h-full backdrop-blur bg-gray-800/40 flex justify-center">
 			<div class="m-auto pt-64 flex flex-col justify-center">
 				<div class="max-w-md">
 					<AddFilesPlaceholder>
@@ -194,9 +216,7 @@
 	<EditDocModal bind:show={showEditDocModal} {selectedDoc} />
 {/key}
 
-<AddDocModal bind:show={showAddDocModal} />
-
-<SettingsModal bind:show={showSettingsModal} />
+<AddDocModal bind:show={showAddDocModal} {uploadDoc} />
 
 <div class="mb-3">
 	<div class="flex justify-between items-center">
@@ -259,6 +279,7 @@
 	<div>
 		<button
 			class=" px-2 py-2 rounded-xl border border-gray-200 dark:border-gray-600 dark:border-0 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition font-medium text-sm flex items-center space-x-1"
+			aria-label={$i18n.t('Add Docs')}
 			on:click={() => {
 				showAddDocModal = true;
 			}}
@@ -450,7 +471,7 @@
 						{/if}
 					</div>
 					<div class=" self-center flex-1">
-						<div class=" font-bold line-clamp-1">#{doc.name} ({doc.filename})</div>
+						<div class=" font-semibold line-clamp-1">#{doc.name} ({doc.filename})</div>
 						<div class=" text-xs overflow-hidden text-ellipsis line-clamp-1">
 							{doc.title}
 						</div>
@@ -461,6 +482,7 @@
 				<button
 					class="self-center w-fit text-sm z-20 px-2 py-2 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
 					type="button"
+					aria-label={$i18n.t('Edit Doc')}
 					on:click={async (e) => {
 						e.stopPropagation();
 						showEditDocModal = !showEditDocModal;
@@ -508,6 +530,7 @@
 				<button
 					class="self-center w-fit text-sm px-2 py-2 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
 					type="button"
+					aria-label={$i18n.t('Delete Doc')}
 					on:click={(e) => {
 						e.stopPropagation();
 
@@ -532,6 +555,10 @@
 			</div>
 		</button>
 	{/each}
+</div>
+
+<div class=" text-gray-500 text-xs mt-1 mb-2">
+	ⓘ {$i18n.t("Use '#' in the prompt input to load and select your documents.")}
 </div>
 
 <div class=" flex justify-end w-full mb-2">
@@ -559,7 +586,8 @@
 							doc.filename,
 							doc.name,
 							doc.title,
-							doc.vector_ids
+							doc.vector_ids,
+							doc.content
 						).catch((error) => {
 							toast.error(error);
 							return null;
@@ -579,7 +607,9 @@
 				documentsImportInputElement.click();
 			}}
 		>
-			<div class=" self-center mr-2 font-medium">{$i18n.t('Import Documents Mapping')}</div>
+			<div class=" self-center mr-2 font-medium line-clamp-1">
+				{$i18n.t('Import Documents Mapping')}
+			</div>
 
 			<div class=" self-center">
 				<svg
@@ -606,7 +636,9 @@
 				saveAs(blob, `documents-mapping-export-${Date.now()}.json`);
 			}}
 		>
-			<div class=" self-center mr-2 font-medium">{$i18n.t('Export Documents Mapping')}</div>
+			<div class=" self-center mr-2 font-medium line-clamp-1">
+				{$i18n.t('Export Documents Mapping')}
+			</div>
 
 			<div class=" self-center">
 				<svg

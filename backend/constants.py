@@ -34,6 +34,7 @@ class ERROR_MESSAGES(str, Enum):
     COMMAND_TAKEN = "Uh-oh! This command is already registered. Please choose another command string."
     FILE_EXISTS = "Uh-oh! This file is already registered. Please choose another file."
 
+    ID_TAKEN = "Uh-oh! This id is already registered. Please choose another id string."
     MODEL_ID_TAKEN = "Uh-oh! This model id is already registered. Please choose another model id string."
 
     NAME_TAG_TAKEN = "Uh-oh! This name tag is already registered. Please choose another name tag string."
@@ -90,3 +91,14 @@ class ERROR_MESSAGES(str, Enum):
     OLLAMA_API_DISABLED = (
         "The Ollama API is disabled. Please enable it to use this feature."
     )
+
+
+class TASKS(str, Enum):
+    def __str__(self) -> str:
+        return super().__str__()
+
+    DEFAULT = lambda task="": f"{task if task else 'generation'}"
+    TITLE_GENERATION = "title_generation"
+    EMOJI_GENERATION = "emoji_generation"
+    QUERY_GENERATION = "query_generation"
+    FUNCTION_CALLING = "function_calling"

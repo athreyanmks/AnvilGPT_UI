@@ -5,6 +5,248 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.11] - 2024-08-02
+
+### Added
+
+- **📊 Model Information Display**: Added visuals for model selection, including images next to model names for more intuitive navigation.
+- **🗣 ElevenLabs Voice Adaptations**: Voice enhancements including support for ElevenLabs voice ID by name for personalized vocal interactions.
+- **⌨️ Arrow Keys Model Selection**: Users can now use arrow keys for quicker model selection, enhancing accessibility.
+- **🔍 Fuzzy Search in Model Selector**: Enhanced model selector with fuzzy search to locate models swiftly, including descriptions.
+- **🕹️ ComfyUI Flux Image Generation**: Added support for the new Flux image gen model; introduces environment controls like weight precision and CLIP model options in Settings.
+- **💾 Display File Size for Uploads**: Enhanced file interface now displays file size, preparing for upcoming upload restrictions.
+- **🎚️ Advanced Params "Min P"**: Added 'Min P' parameter in the advanced settings for customized model precision control.
+- **🔒 Enhanced OAuth**: Introduced custom redirect URI support for OAuth behind reverse proxies, enabling safer authentication processes.
+- **🖥 Enhanced Latex Rendering**: Adjustments made to latex rendering processes, now accurately detecting and presenting latex inputs from text.
+- **🌐 Internationalization**: Enhanced with new Romanian and updated Vietnamese and Ukrainian translations, helping broaden accessibility for international users.
+
+### Fixed
+
+- **🔧 Tags Handling in Document Upload**: Tags are now properly sent to the upload document handler, resolving issues with missing metadata.
+- **🖥️ Sensitive Input Fields**: Corrected browser misinterpretation of secure input fields, preventing misclassification as password fields.
+- **📂 Static Path Resolution in PDF Generation**: Fixed static paths that adjust dynamically to prevent issues across various environments.
+
+### Changed
+
+- **🎨 UI/UX Styling Enhancements**: Multiple minor styling updates for a cleaner and more intuitive user interface.
+- **🚧 Refactoring Various Components**: Numerous refactoring changes across styling, file handling, and function simplifications for clarity and performance.
+- **🎛️ User Valves Management**: Moved user valves from settings to direct chat controls for more user-friendly access during interactions.
+
+### Removed
+
+- **⚙️ Health Check Logging**: Removed verbose logging from the health checking processes to declutter logs and improve backend performance.
+
+## [0.3.10] - 2024-07-17
+
+### Fixed
+
+- **🔄 Improved File Upload**: Addressed the issue where file uploads lacked animation.
+- **💬 Chat Continuity**: Fixed a problem where existing chats were not functioning properly in some instances.
+- **🗂️ Chat File Reset**: Resolved the issue of chat files not resetting for new conversations, now ensuring a clean slate for each chat session.
+- **📁 Document Workspace Uploads**: Corrected the handling of document uploads in the workspace using the Files API.
+
+## [0.3.9] - 2024-07-17
+
+### Added
+
+- **📁 Files Chat Controls**: We've reverted to the old file handling behavior where uploaded files are always included. You can now manage files directly within the chat controls section, giving you the ability to remove files as needed.
+- **🔧 "Action" Function Support**: Introducing a new "Action" function to write custom buttons to the message toolbar. This feature enables more interactive messaging, with documentation coming soon.
+- **📜 Citations Handling**: For newly uploaded files in documents workspace, citations will now display the actual filename. Additionally, you can click on these filenames to open the file in a new tab for easier access.
+- **🛠️ Event Emitter and Call Updates**: Enhanced 'event_emitter' to allow message replacement and 'event_call' to support text input for Tools and Functions. Detailed documentation will be provided shortly.
+- **🎨 Styling Refactor**: Various styling updates for a cleaner and more cohesive user interface.
+- **🌐 Enhanced Translations**: Improved translations for Catalan, Ukrainian, and Brazilian Portuguese.
+
+### Fixed
+
+- **🔧 Chat Controls Priority**: Resolved an issue where Chat Controls values were being overridden by model information parameters. The priority is now Chat Controls, followed by Global Settings, then Model Settings.
+- **🪲 Debug Logs**: Fixed an issue where debug logs were not being logged properly.
+- **🔑 Automatic1111 Auth Key**: The auth key for Automatic1111 is no longer required.
+- **📝 Title Generation**: Ensured that the title generation runs only once, even when multiple models are in a chat.
+- **✅ Boolean Values in Params**: Added support for boolean values in parameters.
+- **🖼️ Files Overlay Styling**: Fixed the styling issue with the files overlay.
+
+### Changed
+
+- **⬆️ Dependency Updates**
+  - Upgraded 'pydantic' from version 2.7.1 to 2.8.2.
+  - Upgraded 'sqlalchemy' from version 2.0.30 to 2.0.31.
+  - Upgraded 'unstructured' from version 0.14.9 to 0.14.10.
+  - Upgraded 'chromadb' from version 0.5.3 to 0.5.4.
+
+## [0.3.8] - 2024-07-09
+
+### Added
+
+- **💬 Chat Controls**: Easily adjust parameters for each chat session, offering more precise control over your interactions.
+- **📌 Pinned Chats**: Support for pinned chats, allowing you to keep important conversations easily accessible.
+- **📄 Apache Tika Integration**: Added support for using Apache Tika as a document loader, enhancing document processing capabilities.
+- **🛠️ Custom Environment for OpenID Claims**: Allows setting custom claims for OpenID, providing more flexibility in user authentication.
+- **🔧 Enhanced Tools & Functions API**: Introduced 'event_emitter' and 'event_call', now you can also add citations for better documentation and tracking. Detailed documentation will be provided on our documentation website.
+- **↔️ Sideways Scrolling in Settings**: Settings tabs container now supports horizontal scrolling for easier navigation.
+- **🌑 Darker OLED Theme**: Includes a new, darker OLED theme and improved styling for the light theme, enhancing visual appeal.
+- **🌐 Language Updates**: Updated translations for Indonesian, German, French, and Catalan languages, expanding accessibility.
+
+### Fixed
+
+- **⏰ OpenAI Streaming Timeout**: Resolved issues with OpenAI streaming response using the 'AIOHTTP_CLIENT_TIMEOUT' setting, ensuring reliable performance.
+- **💡 User Valves**: Fixed malfunctioning user valves, ensuring proper functionality.
+- **🔄 Collapsible Components**: Addressed issues with collapsible components not working, restoring expected behavior.
+
+### Changed
+
+- **🗃️ Database Backend**: Switched from Peewee to SQLAlchemy for improved concurrency support, enhancing database performance.
+- **⬆️ ChromaDB Update**: Upgraded to version 0.5.3. Ensure your remote ChromaDB instance matches this version.
+- **🔤 Primary Font Styling**: Updated primary font to Archivo for better visual consistency.
+- **🔄 Font Change for Windows**: Replaced Arimo with Inter font for Windows users, improving readability.
+- **🚀 Lazy Loading**: Implemented lazy loading for 'faster_whisper' and 'sentence_transformers' to reduce startup memory usage.
+- **📋 Task Generation Payload**: Task generations now include only the "task" field in the body instead of "title".
+
+## [0.3.7] - 2024-06-29
+
+### Added
+
+- **🌐 Enhanced Internationalization (i18n)**: Newly introduced Indonesian translation, and updated translations for Turkish, Chinese, and Catalan languages to improve user accessibility.
+
+### Fixed
+
+- **🕵️‍♂️ Browser Language Detection**: Corrected the issue where the application was not properly detecting and adapting to the browser's language settings.
+- **🔐 OIDC Admin Role Assignment**: Fixed a bug where the admin role was not being assigned to the first user who signed up via OpenID Connect (OIDC).
+- **💬 Chat/Completions Endpoint**: Resolved an issue where the chat/completions endpoint was non-functional when the stream option was set to False.
+- **🚫 'WEBUI_AUTH' Configuration**: Addressed the problem where setting 'WEBUI_AUTH' to False was not being applied correctly.
+
+### Changed
+
+- **📦 Dependency Update**: Upgraded 'authlib' from version 1.3.0 to 1.3.1 to ensure better security and performance enhancements.
+
+## [0.3.6] - 2024-06-27
+
+### Added
+
+- **✨ "Functions" Feature**: You can now utilize "Functions" like filters (middleware) and pipe (model) functions directly within the WebUI. While largely compatible with Pipelines, these native functions can be executed easily within Open WebUI. Example use cases for filter functions include usage monitoring, real-time translation, moderation, and automemory. For pipe functions, the scope ranges from Cohere and Anthropic integration directly within Open WebUI, enabling "Valves" for per-user OpenAI API key usage, and much more. If you encounter issues, SAFE_MODE has been introduced.
+- **📁 Files API**: Compatible with OpenAI, this feature allows for custom Retrieval-Augmented Generation (RAG) in conjunction with the Filter Function. More examples will be shared on our community platform and official documentation website.
+- **🛠️ Tool Enhancements**: Tools now support citations and "Valves". Documentation will be available shortly.
+- **🔗 Iframe Support via Files API**: Enables rendering HTML directly into your chat interface using functions and tools. Use cases include playing games like DOOM and Snake, displaying a weather applet, and implementing Anthropic "artifacts"-like features. Stay tuned for updates on our community platform and documentation.
+- **🔒 Experimental OAuth Support**: New experimental OAuth support. Check our documentation for more details.
+- **🖼️ Custom Background Support**: Set a custom background from Settings > Interface to personalize your experience.
+- **🔑 AUTOMATIC1111_API_AUTH Support**: Enhanced security for the AUTOMATIC1111 API.
+- **🎨 Code Highlight Optimization**: Improved code highlighting features.
+- **🎙️ Voice Interruption Feature**: Reintroduced and now toggleable from Settings > Interface.
+- **💤 Wakelock API**: Now in use to prevent screen dimming during important tasks.
+- **🔐 API Key Privacy**: All API keys are now hidden by default for better security.
+- **🔍 New Web Search Provider**: Added jina_search as a new option.
+- **🌐 Enhanced Internationalization (i18n)**: Improved Korean translation and updated Chinese and Ukrainian translations.
+
+### Fixed
+
+- **🔧 Conversation Mode Issue**: Fixed the issue where Conversation Mode remained active after being removed from settings.
+- **📏 Scroll Button Obstruction**: Resolved the issue where the scrollToBottom button container obstructed clicks on buttons beneath it.
+
+### Changed
+
+- **⏲️ AIOHTTP_CLIENT_TIMEOUT**: Now set to 'None' by default for improved configuration flexibility.
+- **📞 Voice Call Enhancements**: Improved by skipping code blocks and expressions during calls.
+- **🚫 Error Message Handling**: Disabled the continuation of operations with error messages.
+- **🗂️ Playground Relocation**: Moved the Playground from the workspace to the user menu for better user experience.
+
+## [0.3.5] - 2024-06-16
+
+### Added
+
+- **📞 Enhanced Voice Call**: Text-to-speech (TTS) callback now operates in real-time for each sentence, reducing latency by not waiting for full completion.
+- **👆 Tap to Interrupt**: During a call, you can now stop the assistant from speaking by simply tapping, instead of using voice. This resolves the issue of the speaker's voice being mistakenly registered as input.
+- **😊 Emoji Call**: Toggle this feature on from the Settings > Interface, allowing LLMs to express emotions using emojis during voice calls for a more dynamic interaction.
+- **🖱️ Quick Archive/Delete**: Use the Shift key + mouseover on the chat list to swiftly archive or delete items.
+- **📝 Markdown Support in Model Descriptions**: You can now format model descriptions with markdown, enabling bold text, links, etc.
+- **🧠 Editable Memories**: Adds the capability to modify memories.
+- **📋 Admin Panel Sorting**: Introduces the ability to sort users/chats within the admin panel.
+- **🌑 Dark Mode for Quick Selectors**: Dark mode now available for chat quick selectors (prompts, models, documents).
+- **🔧 Advanced Parameters**: Adds 'num_keep' and 'num_batch' to advanced parameters for customization.
+- **📅 Dynamic System Prompts**: New variables '{{CURRENT_DATETIME}}', '{{CURRENT_TIME}}', '{{USER_LOCATION}}' added for system prompts. Ensure '{{USER_LOCATION}}' is toggled on from Settings > Interface.
+- **🌐 Tavily Web Search**: Includes Tavily as a web search provider option.
+- **🖊️ Federated Auth Usernames**: Ability to set user names for federated authentication.
+- **🔗 Auto Clean URLs**: When adding connection URLs, trailing slashes are now automatically removed.
+- **🌐 Enhanced Translations**: Improved Chinese and Swedish translations.
+
+### Fixed
+
+- **⏳ AIOHTTP_CLIENT_TIMEOUT**: Introduced a new environment variable 'AIOHTTP_CLIENT_TIMEOUT' for requests to Ollama lasting longer than 5 minutes. Default is 300 seconds; set to blank ('') for no timeout.
+- **❌ Message Delete Freeze**: Resolved an issue where message deletion would sometimes cause the web UI to freeze.
+
+## [0.3.4] - 2024-06-12
+
+### Fixed
+
+- **🔒 Mixed Content with HTTPS Issue**: Resolved a problem where mixed content (HTTP and HTTPS) was causing security warnings and blocking resources on HTTPS sites.
+- **🔍 Web Search Issue**: Addressed the problem where web search functionality was not working correctly. The 'ENABLE_RAG_LOCAL_WEB_FETCH' option has been reintroduced to restore proper web searching capabilities.
+- **💾 RAG Template Not Being Saved**: Fixed an issue where the RAG template was not being saved correctly, ensuring your custom templates are now preserved as expected.
+
+## [0.3.3] - 2024-06-12
+
+### Added
+
+- **🛠️ Native Python Function Calling**: Introducing native Python function calling within Open WebUI. We’ve also included a built-in code editor to seamlessly develop and integrate function code within the 'Tools' workspace. With this, you can significantly enhance your LLM’s capabilities by creating custom RAG pipelines, web search tools, and even agent-like features such as sending Discord messages.
+- **🌐 DuckDuckGo Integration**: Added DuckDuckGo as a web search provider, giving you more search options.
+- **🌏 Enhanced Translations**: Improved translations for Vietnamese and Chinese languages, making the interface more accessible.
+
+### Fixed
+
+- **🔗 Web Search URL Error Handling**: Fixed the issue where a single URL error would disrupt the data loading process in Web Search mode. Now, such errors will be handled gracefully to ensure uninterrupted data loading.
+- **🖥️ Frontend Responsiveness**: Resolved the problem where the frontend would stop responding if the backend encounters an error while downloading a model. Improved error handling to maintain frontend stability.
+- **🔧 Dependency Issues in pip**: Fixed issues related to pip installations, ensuring all dependencies are correctly managed to prevent installation errors.
+
+## [0.3.2] - 2024-06-10
+
+### Added
+
+- **🔍 Web Search Query Status**: The web search query will now persist in the results section to aid in easier debugging and tracking of search queries.
+- **🌐 New Web Search Provider**: We have added Serply as a new option for web search providers, giving you more choices for your search needs.
+- **🌏 Improved Translations**: We've enhanced translations for Chinese and Portuguese.
+
+### Fixed
+
+- **🎤 Audio File Upload Issue**: The bug that prevented audio files from being uploaded in chat input has been fixed, ensuring smooth communication.
+- **💬 Message Input Handling**: Improved the handling of message inputs by instantly clearing images and text after sending, along with immediate visual indications when a response message is loading, enhancing user feedback.
+- **⚙️ Parameter Registration and Validation**: Fixed the issue where parameters were not registering in certain cases and addressed the problem where users were unable to save due to invalid input errors.
+
+## [0.3.1] - 2024-06-09
+
+### Fixed
+
+- **💬 Chat Functionality**: Resolved the issue where chat functionality was not working for specific models.
+
+## [0.3.0] - 2024-06-09
+
+### Added
+
+- **📚 Knowledge Support for Models**: Attach documents directly to models from the models workspace, enhancing the information available to each model.
+- **🎙️ Hands-Free Voice Call Feature**: Initiate voice calls without needing to use your hands, making interactions more seamless.
+- **📹 Video Call Feature**: Enable video calls with supported vision models like Llava and GPT-4o, adding a visual dimension to your communications.
+- **🎛️ Enhanced UI for Voice Recording**: Improved user interface for the voice recording feature, making it more intuitive and user-friendly.
+- **🌐 External STT Support**: Now support for external Speech-To-Text services, providing more flexibility in choosing your STT provider.
+- **⚙️ Unified Settings**: Consolidated settings including document settings under a new admin settings section for easier management.
+- **🌑 Dark Mode Splash Screen**: A new splash screen for dark mode, ensuring a consistent and visually appealing experience for dark mode users.
+- **📥 Upload Pipeline**: Directly upload pipelines from the admin settings > pipelines section, streamlining the pipeline management process.
+- **🌍 Improved Language Support**: Enhanced support for Chinese and Ukrainian languages, better catering to a global user base.
+
+### Fixed
+
+- **🛠️ Playground Issue**: Fixed the playground not functioning properly, ensuring a smoother user experience.
+- **🔥 Temperature Parameter Issue**: Corrected the issue where the temperature value '0' was not being passed correctly.
+- **📝 Prompt Input Clearing**: Resolved prompt input textarea not being cleared right away, ensuring a clean slate for new inputs.
+- **✨ Various UI Styling Issues**: Fixed numerous user interface styling problems for a more cohesive look.
+- **👥 Active Users Display**: Fixed active users showing active sessions instead of actual users, now reflecting accurate user activity.
+- **🌐 Community Platform Compatibility**: The Community Platform is back online and fully compatible with Open WebUI.
+
+### Changed
+
+- **📝 RAG Implementation**: Updated the RAG (Retrieval-Augmented Generation) implementation to use a system prompt for context, instead of overriding the user's prompt.
+- **🔄 Settings Relocation**: Moved Models, Connections, Audio, and Images settings to the admin settings for better organization.
+- **✍️ Improved Title Generation**: Enhanced the default prompt for title generation, yielding better results.
+- **🔧 Backend Task Management**: Tasks like title generation and search query generation are now managed on the backend side and controlled only by the admin.
+- **🔍 Editable Search Query Prompt**: You can now edit the search query generation prompt, offering more control over how queries are generated.
+- **📏 Prompt Length Threshold**: Set the prompt length threshold for search query generation from the admin settings, giving more customization options.
+- **📣 Settings Consolidation**: Merged the Banners admin setting with the Interface admin setting for a more streamlined settings area.
+
 ## [0.2.5] - 2024-06-05
 
 ### Added

@@ -22,6 +22,7 @@
 	export let sendPrompt: Function;
 	export let continueGeneration: Function;
 	export let regenerateResponse: Function;
+	export let chatActionHandler: Function;
 
 	export let user = $_user;
 	export let prompt;
@@ -202,38 +203,51 @@
 		}, 100);
 	};
 
-	const messageDeleteHandler = async (messageId) => {
+	const deleteMessageHandler = async (messageId) => {
 		const messageToDelete = history.messages[messageId];
-		const messageParentId = messageToDelete.parentId;
-		const messageChildrenIds = messageToDelete.childrenIds ?? [];
-		const hasSibling = messageChildrenIds.some(
+
+		const parentMessageId = messageToDelete.parentId;
+		const childMessageIds = messageToDelete.childrenIds ?? [];
+
+		const hasDescendantMessages = childMessageIds.some(
 			(childId) => history.messages[childId]?.childrenIds?.length > 0
 		);
-		messageChildrenIds.forEach((childId) => {
-			const child = history.messages[childId];
-			if (child && child.childrenIds) {
-				if (child.childrenIds.length === 0 && !hasSibling) {
-					// if last prompt/response pair
-					history.messages[messageParentId].childrenIds = [];
-					history.currentId = messageParentId;
+
+		history.currentId = parentMessageId;
+		await tick();
+
+		// Remove the message itself from the parent message's children array
+		history.messages[parentMessageId].childrenIds = history.messages[
+			parentMessageId
+		].childrenIds.filter((id) => id !== messageId);
+
+		await tick();
+
+		childMessageIds.forEach((childId) => {
+			const childMessage = history.messages[childId];
+
+			if (childMessage && childMessage.childrenIds) {
+				if (childMessage.childrenIds.length === 0 && !hasDescendantMessages) {
+					// If there are no other responses/prompts
+					history.messages[parentMessageId].childrenIds = [];
 				} else {
-					child.childrenIds.forEach((grandChildId) => {
+					childMessage.childrenIds.forEach((grandChildId) => {
 						if (history.messages[grandChildId]) {
-							history.messages[grandChildId].parentId = messageParentId;
-							history.messages[messageParentId].childrenIds.push(grandChildId);
+							history.messages[grandChildId].parentId = parentMessageId;
+							history.messages[parentMessageId].childrenIds.push(grandChildId);
 						}
 					});
 				}
 			}
-			// remove response
-			history.messages[messageParentId].childrenIds = history.messages[
-				messageParentId
+
+			// Remove child message id from the parent message's children array
+			history.messages[parentMessageId].childrenIds = history.messages[
+				parentMessageId
 			].childrenIds.filter((id) => id !== childId);
 		});
-		// remove prompt
-		history.messages[messageParentId].childrenIds = history.messages[
-			messageParentId
-		].childrenIds.filter((id) => id !== messageId);
+
+		await tick();
+
 		await updateChatById(localStorage.token, chatId, {
 			messages: messages,
 			history: history
@@ -292,7 +306,7 @@
 						>
 							{#if message.role === 'user'}
 								<UserMessage
-									on:delete={() => messageDeleteHandler(message.id)}
+									on:delete={() => deleteMessageHandler(message.id)}
 									{user}
 									{readOnly}
 									{message}
@@ -308,7 +322,7 @@
 									copyToClipboard={copyToClipboardWithToast}
 								/>
 							{:else if $mobile || (history.messages[message.parentId]?.models?.length ?? 1) === 1}
-								{#key message.id}
+								{#key message.id && history.currentId}
 									<ResponseMessage
 										{message}
 										siblings={history.messages[message.parentId]?.childrenIds ?? []}
@@ -322,6 +336,9 @@
 										copyToClipboard={copyToClipboardWithToast}
 										{continueGeneration}
 										{regenerateResponse}
+										on:action={async (e) => {
+											await chatActionHandler(chatId, e.detail, message.model, message.id);
+										}}
 										on:save={async (e) => {
 											console.log('save', e);
 
@@ -372,7 +389,7 @@
 				{/each}
 
 				{#if bottomPadding}
-					<div class="  pb-20" />
+					<div class="  pb-6" />
 				{/if}
 			{/key}
 		</div>
