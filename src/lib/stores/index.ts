@@ -57,7 +57,10 @@ export const collection_filtered_documents = writable([
 	}
 ]);
 
-export const created_collections = writable([{collection_name:'collection_name'}])
+export const created_collections = writable([{collection_name: 'collection_name'}]);
+
+export const tools = writable([]);
+export const functions = writable([]);
 
 export const banners: Writable<Banner[]> = writable([]);
 

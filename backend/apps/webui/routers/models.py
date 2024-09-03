@@ -20,7 +20,7 @@ router = APIRouter()
 
 @router.get("/", response_model=List[ModelResponse])
 async def get_models(user=Depends(get_verified_user)):
-    return Models.get_all_models()
+    return Models.get_all_models_of_user(user.id)
 
 
 ############################
@@ -32,7 +32,7 @@ async def get_models(user=Depends(get_verified_user)):
 async def add_new_model(
     request: Request,
     form_data: ModelForm,
-    user=Depends(get_admin_user),
+    user=Depends(get_verified_user),
 ):
     if form_data.id in request.app.state.MODELS:
         raise HTTPException(
@@ -56,9 +56,9 @@ async def add_new_model(
 ############################
 
 
-@router.get("/", response_model=Optional[ModelModel])
-async def get_model_by_id(id: str, user=Depends(get_verified_user)):
-    model = Models.get_model_by_id(id)
+@router.get("/id", response_model=Optional[ModelModel])
+async def get_model_by_id_and_user(id: str, user=Depends(get_verified_user)):
+    model = Models.get_model_by_id_and_user(id,user.id)
 
     if model:
         return model
@@ -75,15 +75,15 @@ async def get_model_by_id(id: str, user=Depends(get_verified_user)):
 
 
 @router.post("/update", response_model=Optional[ModelModel])
-async def update_model_by_id(
+async def update_model_by_id_and_user(
     request: Request,
     id: str,
     form_data: ModelForm,
-    user=Depends(get_admin_user),
+    user=Depends(get_verified_user),
 ):
-    model = Models.get_model_by_id(id)
+    model = Models.get_model_by_id_and_user(id)
     if model:
-        model = Models.update_model_by_id(id, form_data)
+        model = Models.update_model_by_id_and_user(id, form_data)
         return model
     else:
         if form_data.id in request.app.state.MODELS:
@@ -108,6 +108,6 @@ async def update_model_by_id(
 
 
 @router.delete("/delete", response_model=bool)
-async def delete_model_by_id(id: str, user=Depends(get_admin_user)):
-    result = Models.delete_model_by_id(id)
+async def delete_model_by_id(id: str, user=Depends(get_verified_user)):
+    result = Models.delete_model_by_id_and_user(id, user.id)
     return result

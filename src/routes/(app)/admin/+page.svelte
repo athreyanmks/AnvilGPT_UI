@@ -97,7 +97,7 @@
 	}}
 />
 
-{#key selectedUser}
+<!-- {#key selectedUser}
 	<EditUserModal
 		bind:show={showEditUserModal}
 		{selectedUser}
@@ -106,7 +106,7 @@
 			users = await getUsers(localStorage.token);
 		}}
 	/>
-{/key}
+{/key} -->
 
 <AddUserModal
 	bind:show={showAddUserModal}
@@ -114,7 +114,7 @@
 		users = await getUsers(localStorage.token);
 	}}
 />
-<UserChatsModal bind:show={showUserChatsModal} user={selectedUser} />
+<!-- <UserChatsModal bind:show={showUserChatsModal} user={selectedUser} /> -->
 
 {#if loaded}
 	<div class="mt-0.5 mb-3 gap-1 flex flex-col md:flex-row justify-between">
@@ -308,7 +308,7 @@
 						<td class="px-3 py-2 text-right">
 							<div class="flex justify-end w-full">
 								{#if user.role !== 'admin'}
-									<Tooltip content={$i18n.t('Chats')}>
+									<!-- <Tooltip content={$i18n.t('Chats')}>
 										<button
 											class="self-center w-fit text-sm px-2 py-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
 											on:click={async () => {
@@ -318,9 +318,9 @@
 										>
 											<ChatBubbles />
 										</button>
-									</Tooltip>
+									</Tooltip> -->
 
-									<Tooltip content={$i18n.t('Edit User')}>
+									<!-- <Tooltip content={$i18n.t('Edit User')}>
 										<button
 											class="self-center w-fit text-sm px-2 py-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
 											on:click={async () => {
@@ -343,7 +343,7 @@
 												/>
 											</svg>
 										</button>
-									</Tooltip>
+									</Tooltip> -->
 
 									<Tooltip content={$i18n.t('Delete User')}>
 										<button
@@ -370,7 +370,7 @@
 										</button>
 									</Tooltip>
 								{:else}
-									<Tooltip content={$i18n.t('Edit User')}>
+									<!-- <Tooltip content={$i18n.t('Edit User')}>
 										<button
 											class="self-center w-fit text-sm px-2 py-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
 											on:click={async () => {
@@ -393,7 +393,7 @@
 												/>
 											</svg>
 										</button>
-									</Tooltip>
+									</Tooltip> -->
 								{/if}
 							</div>
 						</td>

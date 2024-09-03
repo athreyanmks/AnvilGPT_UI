@@ -110,7 +110,7 @@ def migrate_sqlite(migrator: Migrator, database: pw.Database, *, fake=False):
         user_id = pw.CharField(max_length=255)
 
         class Meta:
-            table_name = "collections"
+            table_name = "collection"
 
     @migrator.create_model
     class Modelfile(pw.Model):
@@ -224,7 +224,7 @@ def migrate_external(migrator: Migrator, database: pw.Database, *, fake=False):
         user_id = pw.CharField(max_length=255)
 
         class Meta:
-            table_name = "collections"
+            table_name = "collection"
 
     @migrator.create_model
     class Modelfile(pw.Model):

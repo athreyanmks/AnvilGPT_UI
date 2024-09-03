@@ -1,3 +1,10 @@
+import subprocess
+import sys
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet",package])
+install('authlib')
+install('alembic')
+
 import base64
 import uuid
 from contextlib import asynccontextmanager
@@ -42,7 +49,7 @@ from apps.openai.main import (
 from apps.audio.main import app as audio_app
 from apps.images.main import app as images_app
 from apps.rag.main import app as rag_app
-from apps.webuiui.main import (
+from apps.webui.main import (
     app as webui_app,
     get_pipe_models,
     generate_function_chat_completion,
@@ -121,6 +128,8 @@ from config import (
 
 from constants import ERROR_MESSAGES, WEBHOOK_MESSAGES, TASKS
 from utils.webhook import post_webhook
+
+
 
 if SAFE_MODE:
     print("SAFE MODE ENABLED")
@@ -889,7 +898,7 @@ async def commit_session_after_request(request: Request, call_next):
 @app.middleware("http")
 async def check_url(request: Request, call_next):
     if len(app.state.MODELS) == 0:
-        await get_all_models()
+        await get_all_models("")
     else:
         pass
 
@@ -923,7 +932,8 @@ app.mount("/api/v1", webui_app)
 webui_app.state.EMBEDDING_FUNCTION = rag_app.state.EMBEDDING_FUNCTION
 
 
-async def get_all_models():
+async def get_all_models(user_id:str):
+    print(user_id)
     # TODO: Optimize this function
     pipe_models = []
     openai_models = []
@@ -959,7 +969,7 @@ async def get_all_models():
         for function in Functions.get_functions_by_type("action", active_only=True)
     ]
 
-    custom_models = Models.get_all_models()
+    custom_models = Models.get_all_models_of_user(user_id)
     for custom_model in custom_models:
         if custom_model.base_model_id == None:
             for model in models:
@@ -1064,7 +1074,7 @@ async def get_all_models():
 
 @app.get("/api/models")
 async def get_models(user=Depends(get_verified_user)):
-    models = await get_all_models()
+    models = await get_all_models(user.id)
 
     # Filter out filter pipelines
     models = [
@@ -1863,7 +1873,7 @@ async def get_pipeline_valves(
     pipeline_id: str,
     user=Depends(get_admin_user),
 ):
-    models = await get_all_models()
+    # models = await get_all_models(user)
     r = None
     try:
         url = openai_app.state.config.OPENAI_API_BASE_URLS[urlIdx]
@@ -1902,7 +1912,7 @@ async def get_pipeline_valves_spec(
     pipeline_id: str,
     user=Depends(get_admin_user),
 ):
-    models = await get_all_models()
+    # models = await get_all_models()
 
     r = None
     try:
@@ -1942,7 +1952,7 @@ async def update_pipeline_valves(
     form_data: dict,
     user=Depends(get_admin_user),
 ):
-    models = await get_all_models()
+    # models = await get_all_models()
 
     r = None
     try:
@@ -2218,12 +2228,20 @@ async def oauth_callback(provider: str, request: Request, response: Response):
                 if Users.get_num_users() == 0
                 else webui_app.state.config.DEFAULT_USER_ROLE
             )
+            # print(username_claim)
+            # print(user_data.get(username_claim, "User"))
+            # print("#####################")
+            # print(str(token))
+            # print("$$$$$$$$$$$$$$$$$$$")
+            # print("&&&&&&&&&&&&&")
+            temp_name = user_data.get(username_claim, "User").split('@')[0]
+            print(temp_name)
             user = Auths.insert_new_auth(
                 email=email,
                 password=get_password_hash(
                     str(uuid.uuid4())
                 ),  # Random password, not used
-                name=user_data.get(username_claim, "User"),
+                name= temp_name,
                 profile_image_url=picture_url,
                 role=role,
                 oauth_sub=provider_sub,

@@ -4,8 +4,8 @@
 	const { saveAs } = fileSaver;
 
 	import { onMount, getContext } from 'svelte';
-	import { WEBUI_NAME, documents, showSidebar, collection_filtered_documents } from '$lib/stores';
-	import { createNewDoc, deleteDocByName, getDocs } from '$lib/apis/documents';
+	import { WEBUI_NAME, documents, showSidebar, collection_filtered_documents, created_collections } from '$lib/stores';
+	import { createNewDoc, deleteDocByName, getDocs, getCollections } from '$lib/apis/documents';
 
 	import { SUPPORTED_FILE_TYPE, SUPPORTED_FILE_EXTENSIONS } from '$lib/constants';
 	import { processDocToVectorDB, uploadDocToVectorDB, deleteDocFromVectorDB } from '$lib/apis/rag';
@@ -44,6 +44,7 @@
 		console.log(result)
 		await deleteDocFromVectorDB(localStorage.token, result['collection_name'], result['vector_ids'])
 		await documents.set(await getDocs(localStorage.token));
+		await created_collections.set(await getCollections(localStorage.token));
 	};
 
 	const deleteDocs = async (docs) => {
@@ -54,6 +55,7 @@
 		);
 
 		await documents.set(await getDocs(localStorage.token));
+		await created_collections.set(await getCollections(localStorage.token));
 	};
 
 	const uploadDoc = async (file, tags?: object) => {
@@ -96,6 +98,7 @@
 				return null;
 			});
 			await documents.set(await getDocs(localStorage.token));
+			await created_collections.set(await getCollections(localStorage.token));
 		}
 	};
 
@@ -106,8 +109,8 @@
 			}, []);
 		});
 		const dropZone = document.querySelector('body');
-
-		console.log("Herereereee")
+		// console.log(documents)
+		// console.log("Herereereee")
 
 		const onDragOver = (e) => {
 			e.preventDefault();
@@ -595,6 +598,7 @@
 					}
 
 					await documents.set(await getDocs(localStorage.token));
+					await created_collections.set(await getCollections(localStorage.token));
 				};
 
 				reader.readAsText(importFiles[0]);

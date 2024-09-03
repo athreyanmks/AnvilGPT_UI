@@ -140,11 +140,23 @@ class ModelsTable:
     def get_all_models(self) -> List[ModelModel]:
         with get_db() as db:
             return [ModelModel.model_validate(model) for model in db.query(Model).all()]
+        
+    def get_all_models_of_user(self, user_id : str) -> List[ModelModel]:
+        with get_db() as db:
+            return [ModelModel.model_validate(model) for model in db.query(Model).filter_by(user_id=user_id).all()]
 
     def get_model_by_id(self, id: str) -> Optional[ModelModel]:
         try:
             with get_db() as db:
                 model = db.get(Model, id)
+                return ModelModel.model_validate(model)
+        except:
+            return None
+    
+    def get_model_by_id_and_user(self, id: str, user_id: str) -> Optional[ModelModel]:
+        try:
+            with get_db() as db:
+                model = db.get(Model, {'id':id, 'user_id':user_id})
                 return ModelModel.model_validate(model)
         except:
             return None
@@ -167,11 +179,40 @@ class ModelsTable:
             print(e)
 
             return None
+        
+    def update_model_by_id_and_user(self, id: str, model: ModelForm, user_id :str) -> Optional[ModelModel]:
+        try:
+            with get_db() as db:
+                # update only the fields that are present in the model
+                result = (
+                    db.query(Model)
+                    .filter_by(id=id, user_id=user_id)
+                    .update(model.model_dump(exclude={"id"}, exclude_none=True))
+                )
+                db.commit()
+
+                model = db.get(Model, {'id':id, 'user_id':user_id})
+                db.refresh(model)
+                return ModelModel.model_validate(model)
+        except Exception as e:
+            print(e)
+
+            return None
 
     def delete_model_by_id(self, id: str) -> bool:
         try:
             with get_db() as db:
                 db.query(Model).filter_by(id=id).delete()
+                db.commit()
+
+                return True
+        except:
+            return False
+        
+    def delete_model_by_id_and_user(self, id: str, user_id: str) -> bool:
+        try:
+            with get_db() as db:
+                db.query(Model).filter_by(id=id, user_id=user_id).delete()
                 db.commit()
 
                 return True

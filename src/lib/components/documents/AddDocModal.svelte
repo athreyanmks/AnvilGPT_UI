@@ -16,7 +16,7 @@
 	const i18n = getContext('i18n');
 
 	export let show = false;
-	export let uploadDoc: Function;
+	// export let uploadDoc: Function;
 	let uploadDocInputElement: HTMLInputElement;
 	let inputFiles;
 	let collection_name : String;

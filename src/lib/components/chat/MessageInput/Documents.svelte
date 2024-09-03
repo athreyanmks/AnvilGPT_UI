@@ -3,6 +3,7 @@
 
 	import { documents, created_collections } from '$lib/stores';
 	import { removeFirstHashWord, isValidHttpUrl } from '$lib/utils';
+	import { getCollections } from '$lib/apis/documents';
 	import { tick, getContext } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { Result } from 'postcss';
@@ -21,7 +22,7 @@
 	let collections = [];
 
 	$: {
-		// console.log($documents)
+		console.log($documents)
 		// console.log($created_collections)
 		collections = [
 		...($documents.length > 0
@@ -64,7 +65,10 @@
 	// 	.filter((collection) => collection.name.includes(prompt.split(' ')?.at(0)?.substring(1) ?? ''))
 	// 	.sort((a, b) => a.name.localeCompare(b.name));
 
-	$: {filteredCollections = $created_collections
+	$: {
+		// created_collections.set(getCollections(localStorage.token));
+		
+		filteredCollections = $created_collections
 		.filter((collection) => collection.collection_name.includes(prompt.split(' ')?.at(0)?.substring(1) ?? ''))
 		.sort((a, b) => a.collection_name.localeCompare(b.collection_name))
 		// .map((cols) => {
@@ -88,7 +92,7 @@
 		selectedIdx = 0;
 
 		console.log(filteredCollections);
-		console.log(filteredItems);
+		// console.log(filteredItems);
 	}
 
 	type ObjectWithName = {

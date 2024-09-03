@@ -11,7 +11,7 @@
 	import { getAllChatTags } from '$lib/apis/chats';
 
 	import { getPrompts } from '$lib/apis/prompts';
-	import { getDocs } from '$lib/apis/documents';
+	import { getCollections, getDocs } from '$lib/apis/documents';
 	import { getTools } from '$lib/apis/tools';
 
 	import { getBanners } from '$lib/apis/configs';
@@ -29,8 +29,11 @@
 		showChangelog,
 		config,
 		showCallOverlay,
-		tools,
-		functions
+		// tools,
+		functions,
+
+		created_collections
+
 	} from '$lib/stores';
 
 	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
@@ -93,8 +96,11 @@
 					documents.set(await getDocs(localStorage.token));
 				})(),
 				(async () => {
-					tools.set(await getTools(localStorage.token));
+					created_collections.set(await getCollections(localStorage.token));
 				})(),
+				// (async () => {
+				// 	tools.set(await getTools(localStorage.token));
+				// })(),
 				(async () => {
 					functions.set(await getFunctions(localStorage.token));
 				})(),
@@ -183,7 +189,7 @@
 </script>
 
 <SettingsModal bind:show={$showSettings} />
-<ChangelogModal bind:show={$showChangelog} />
+<!-- <ChangelogModal bind:show={$showChangelog} /> -->
 
 <div class="app relative">
 	<div

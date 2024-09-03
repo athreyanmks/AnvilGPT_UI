@@ -146,7 +146,7 @@ async def create_new_doc(form_data: DocumentForm, user=Depends(get_current_user)
 ############################
 
 
-@router.get("/name/{name}", response_model=Optional[DocumentResponse])
+@router.get("/docs", response_model=Optional[DocumentResponse])
 async def get_doc_by_name(name: str, user=Depends(get_current_user)):
     doc = Documents.get_doc_by_name(name)
 
@@ -178,7 +178,7 @@ class TagDocumentForm(BaseModel):
     tags: List[dict]
 
 
-@router.post("/name/{name}/tags", response_model=Optional[DocumentResponse])
+@router.post("/doc/tags", response_model=Optional[DocumentResponse])
 async def tag_doc_by_name(form_data: TagDocumentForm, user=Depends(get_current_user)):
     doc = Documents.update_doc_content_by_name_and_user(form_data.name,user.id, {"tags": form_data.tags})
 
@@ -201,7 +201,7 @@ async def tag_doc_by_name(form_data: TagDocumentForm, user=Depends(get_current_u
 ############################
 
 
-@router.post("/name/{name}/update", response_model=Optional[DocumentResponse])
+@router.post("/doc/update", response_model=Optional[DocumentResponse])
 async def update_doc_by_name(
     name: str, form_data: DocumentUpdateForm, user=Depends(get_current_user)
 ):
@@ -226,7 +226,7 @@ async def update_doc_by_name(
 ############################
 
 
-@router.delete("/name/{name}/delete", response_model=Optional[DocumentResponse])
+@router.delete("/doc/delete", response_model=Optional[DocumentResponse])
 async def delete_doc_by_name(name: str, user=Depends(get_current_user)):
     doc_to_be_deleted = Documents.delete_doc_by_name_and_user(name, user.id)
     # delete_docs_from_vector_db()

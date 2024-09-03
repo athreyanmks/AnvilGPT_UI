@@ -1,3 +1,8 @@
+import subprocess
+import sys
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet",package])
+install('duckduckgo_search')
 import logging
 from typing import List, Optional
 from apps.rag.search.main import SearchResult, get_filtered_results

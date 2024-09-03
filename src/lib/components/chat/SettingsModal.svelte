@@ -15,8 +15,6 @@
 	import Chats from './Settings/Chats.svelte';
 	import User from '../icons/User.svelte';
 	import Personalization from './Settings/Personalization.svelte';
-	import { updateUserSettings } from '$lib/apis/users';
-
 	const i18n = getContext('i18n');
 
 	export let show = false;

@@ -1423,15 +1423,7 @@ AUDIO_TTS_VOICE = PersistentConfig(
 ####################################
 
 # SQLite Database old
-DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DATA_DIR}/webui.db")
-
-# Replace the postgres:// with postgresql://
-if "postgres://" in DATABASE_URL:
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
-
-# Replace the postgres:// with postgresql://
-if "postgres://" in DATABASE_URL:
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
+# DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DATA_DIR}/webui.db")
 
 #Postgres Database local
 # DATABASE_HOST = os.environ.get("DATABASE_HOST", f"localhost")
@@ -1442,9 +1434,20 @@ if "postgres://" in DATABASE_URL:
 DATABASE_HOST = os.environ.get("DATABASE_HOST", f"ragdb.mysql.anvilcloud.rcac.purdue.edu")
 DATABASE_PORT = os.environ.get("DATABASE_PORT", 5432)
 DATABASE_SECRET = os.environ.get("DATABASE_SECRET",  f"anvilgpt")
+DATABASE_METHOD = os.environ.get("DATABASE_METHOD",  f"postgresql")
 SQL_DATABASE_NAME = os.environ.get("SQL_DATABASE_NAME",  f"anvilgpt")
 
 #PGVector Database
 VECTOR_DATABASE_STORE = os.environ.get("VECTOR_DATABASE_STORE",  f"pgvector")
 VECTOR_DATABASE_METHOD = os.environ.get("VECTOR_DATABASE_METHOD",  f"postgresql+psycopg")
 VECTOR_DATABASE_NAME = os.environ.get("VECTOR_DATABASE_NAME",  f"anvilgpt_vector")
+
+DATABASE_URL = DATABASE_METHOD+"://postgres:"+DATABASE_SECRET+"@"+ DATABASE_HOST + ":" + str(DATABASE_PORT) + "/" + SQL_DATABASE_NAME
+
+# Replace the postgres:// with postgresql://
+if "postgres://" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
+
+# Replace the postgres:// with postgresql://
+if "postgres://" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")

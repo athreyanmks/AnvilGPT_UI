@@ -1,7 +1,7 @@
 from fastapi import Depends, Request, HTTPException, status
 from datetime import datetime, timedelta
 from typing import List, Union, Optional
-from utils.utils import get_verified_user, get_admin_user
+from utils.utils import get_verified_user, get_admin_user, get_current_user
 from fastapi import APIRouter
 from pydantic import BaseModel
 import json
@@ -134,17 +134,17 @@ async def get_user_archived_chats(user=Depends(get_verified_user)):
 ############################
 
 
-@router.get("/all/db", response_model=List[ChatResponse])
-async def get_all_user_chats_in_db(user=Depends(get_admin_user)):
-    if not ENABLE_ADMIN_EXPORT:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
-        )
-    return [
-        ChatResponse(**{**chat.model_dump(), "chat": json.loads(chat.chat)})
-        for chat in Chats.get_chats()
-    ]
+# @router.get("/all/db", response_model=List[ChatResponse])
+# async def get_all_user_chats_in_db(user=Depends(get_admin_user)):
+#     if not ENABLE_ADMIN_EXPORT:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
+#         )
+#     return [
+#         ChatResponse(**{**chat.model_dump(), "chat": json.loads(chat.chat)})
+#         for chat in Chats.get_chats()
+#     ]
 
 
 ############################

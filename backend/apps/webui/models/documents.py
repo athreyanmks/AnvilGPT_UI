@@ -1,6 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from peewee import *
 from playhouse.shortcuts import model_to_dict
+from sqlalchemy import PrimaryKeyConstraint, String, Column, BigInteger, Text
 from typing import List, Union, Optional
 import time
 import logging
@@ -10,7 +11,7 @@ from utils.misc import get_gravatar_url
 
 
 
-from apps.webui.internal.db import DB
+from apps.webui.internal.db import Base, JSONField, Session, get_db
 
 import json
 
@@ -20,25 +21,29 @@ log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MODELS"])
 
 ####################
-# Documents DB Schema
+# Documents db Schema
 ####################
 
 
-class Document(Model):
-    collection_name = CharField()
-    name = CharField()
-    title = TextField()
-    filename = TextField()
-    content = TextField(null=True)
-    user_id = CharField()
-    timestamp = BigIntegerField()
-    vector_ids = TextField()
+class Document(Base):
+    __tablename__ = "document"
+    __table_args__ = (
+        PrimaryKeyConstraint('name', 'user_id'),
+    )
 
-    class Meta:
-        database = DB
+    collection_name = Column(String)
+    name = Column(String)
+    title = Column(Text)
+    filename = Column(Text)
+    content = Column(Text, nullable=True)
+    user_id = Column(String)
+    timestamp = Column(BigInteger)
+    vector_ids = Column(Text)
 
 
 class DocumentModel(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     collection_name: str
     name: str
     title: str
@@ -78,84 +83,82 @@ class DocumentForm(DocumentUpdateForm):
 
 
 class DocumentsTable:
-    def __init__(self, db):
-        self.db = db
-        self.db.create_tables([Document])
 
     def insert_new_doc(
         self, user_id: str, form_data: DocumentForm
     ) -> Optional[DocumentModel]:
-        document = DocumentModel(
-            **{
-                **form_data.model_dump(),
-                "user_id": user_id,
-                "timestamp": int(time.time()),
-            }
-        )
+        with get_db() as db:
 
-        try:
-            print("Here6")
-            result = Document.create(**document.model_dump())
-            # print(result)
-            # print("########")
-            if result:
-                return document
-            else:
+            document = DocumentModel(
+                **{
+                    **form_data.model_dump(),
+                    "user_id": user_id,
+                    "timestamp": int(time.time()),
+                }
+            )
+
+            try:
+                result = Document(**document.model_dump())
+                db.add(result)
+                db.commit()
+                db.refresh(result)
+                if result:
+                    return DocumentModel.model_validate(result)
+                else:
+                    return None
+            except:
                 return None
-        except:
-            return None
     
 
     # Old function used to retrieve doc only by name not user
     def get_doc_by_name(self, name: str) -> Optional[DocumentModel]:
         try:
-            document = Document.get(Document.name == name)
-            return DocumentModel(**model_to_dict(document))
+            with get_db() as db:
+
+                document = db.query(Document).filter_by(name=name).first()
+                return DocumentModel.model_validate(document) if document else None
         except:
             return None
     
     def get_doc_by_name_and_user(self, name: str, user_id: str) -> Optional[DocumentModel]:
         try:
-            # print(Document._meta)
-            # print(Document._meta.fields)
-            # print(Document._meta.primary_key)
-            # print(Document._meta.schema)
-            # print(Document._meta.constraints)
-            document = Document.select().where((Document.name == name) & (Document.user_id == user_id))
-            # .where()
-            # print("Here5")
-            # print(len(document))
-            if len(document) == 0:
-                return None
-            else:
-                # print(document)
-                # print("########")
-                result = DocumentModel(**model_to_dict(document[0]))
-                # print(result)
-                # print("########")
-                return result
+            with get_db() as db:
+
+                document = db.query(Document).filter_by(name=name, user_id=user_id).first()
+                # print("Here5")
+                # print(len(document))
+                if len(document) == 0:
+                    return None
+                else:
+                    # print(document)
+                    # print("########")
+                    result =  DocumentModel.model_validate(document) if document else None
+                    # print(result)
+                    # print("########")
+                    return result
         except:
             return None
 
     # Old function used to retrieve all docs for display
     def get_docs(self) -> List[DocumentModel]:
-        return [
-            DocumentModel(**model_to_dict(doc))
-            for doc in Document.select()
-            # .limit(limit).offset(skip)
-        ]
+        with get_db() as db:
+
+            return [
+                DocumentModel.model_validate(doc) for doc in db.query(Document).all()
+            ]
     
     def get_docs_of_user(self, user_id: str) -> List[DocumentModel]:
         try: 
-            print(Document.select().where(Document.user_id == user_id))
-            docs = [
-            DocumentModel(**model_to_dict(doc))
-            for doc in Document.select().where(Document.user_id == user_id)
-            ]
-            print(docs)
-            return docs
+            with get_db() as db:
 
-        except:
+                docs = [
+                    DocumentModel.model_validate(doc) for doc in db.query(Document).filter_by(user_id=user_id).all()
+                ]
+                # print(docs)
+                return docs
+
+        except Exception as e:
+            print(e)
             return None
         
 
@@ -164,15 +167,17 @@ class DocumentsTable:
         self, name: str, form_data: DocumentUpdateForm
     ) -> Optional[DocumentModel]:
         try:
-            query = Document.update(
-                title=form_data.title,
-                name=form_data.name,
-                timestamp=int(time.time()),
-            ).where(Document.name == name)
-            query.execute()
+            with get_db() as db:
 
-            doc = Document.get(Document.name == form_data.name)
-            return DocumentModel(**model_to_dict(doc))
+                db.query(Document).filter_by(name=name).update(
+                    {
+                        "title": form_data.title,
+                        "name": form_data.name,
+                        "timestamp": int(time.time()),
+                    }
+                )
+                db.commit()
+                return self.get_doc_by_name(form_data.name)
         except Exception as e:
             log.exception(e)
             return None
@@ -182,18 +187,17 @@ class DocumentsTable:
         self, name: str, user_id: str, form_data: DocumentUpdateForm
     ) -> Optional[DocumentModel]:
         try:
-            doc = Document.select().where((Document.name == form_data.name) & (Document.user_id == user_id))
-            if len(doc) == 0:
-                query = Document.update(
-                    title=form_data.title,
-                    name=form_data.name,
-                    timestamp=int(time.time()),
-                ).where((Document.name == name) & (Document.user_id == user_id))
-                query.execute()
-                doc = Document.select().where((Document.name == form_data.name) & (Document.user_id == user_id))
-                return DocumentModel(**model_to_dict(doc[0]))
-            else:
-                return None
+            with get_db() as db:
+
+                db.query(Document).filter_by(name=name, user_id=user_id).update(
+                    {
+                        "title": form_data.title,
+                        "name": form_data.name,
+                        "timestamp": int(time.time()),
+                    }
+                )
+                db.commit()
+                return self.get_doc_by_name(form_data.name)
         except Exception as e:
             log.exception(e)
             return None
@@ -206,14 +210,16 @@ class DocumentsTable:
             doc_content = json.loads(doc.content if doc.content else "{}")
             doc_content = {**doc_content, **updated}
 
-            query = Document.update(
-                content=json.dumps(doc_content),
-                timestamp=int(time.time()),
-            ).where(Document.name == name)
-            query.execute()
+            with get_db() as db:
 
-            doc = Document.get(Document.name == name)
-            return DocumentModel(**model_to_dict(doc))
+                db.query(Document).filter_by(name=name).update(
+                    {
+                        "content": json.dumps(doc_content),
+                        "timestamp": int(time.time()),
+                    }
+                )
+                db.commit()
+                return self.get_doc_by_name(name)
         except Exception as e:
             log.exception(e)
             return None
@@ -226,38 +232,39 @@ class DocumentsTable:
             doc_content = json.loads(doc.content if doc.content else "{}")
             doc_content = {**doc_content, **updated}
 
-            query = Document.update(
-                content=json.dumps(doc_content),
-                timestamp=int(time.time()),
-            ).where((Document.name == name) & (Document.user_id == user_id))
-            query.execute()
+            with get_db() as db:
 
-            doc = Document.select().where((Document.name == name) & (Document.user_id == user_id))
-            return DocumentModel(**model_to_dict(doc[0]))
+                db.query(Document).filter_by(name=name, user_id=user_id).update(
+                    {
+                        "content": json.dumps(doc_content),
+                        "timestamp": int(time.time()),
+                    }
+                )
+                db.commit()
+                return self.get_doc_by_name(name)
         except Exception as e:
             log.exception(e)
             return None
 
     def delete_doc_by_name(self, name: str) -> bool:
         try:
-            query = Document.delete().where((Document.name == name))
-            query.execute()  # Remove the rows, return number of rows removed.
+            with get_db() as db:
 
-            return True
+                db.query(Document).filter_by(name=name).delete()
+                db.commit()
+                return True
         except:
             return False
 
-    def delete_doc_by_name_and_user(self, name: str, user_id: str) -> str:
+    def delete_doc_by_name_and_user(self, name: str, user_id: str) -> Optional[DocumentModel]:
         try:
-            doc_to_be_deleted = [DocumentModel(**model_to_dict(doc))
-            for doc in Document.select().where((Document.name == name) & (Document.user_id == user_id))][0]
-            query = Document.delete().where((Document.name == name) & (Document.user_id == user_id))
-            query.execute()  # Remove the rows, return number of rows removed.
-            # doc_details = {}
-            # doc_details['collection_name'] = doc_to_be_deleted.collection_name
-            # doc_details['collection_name'] = doc_to_be_deleted.vector_ids
-            return doc_to_be_deleted
+            with get_db() as db:
+                doc_to_be_deleted = db.query(Document).filter_by(name=name, user_id=user_id).first()
+                db.query(Document).filter_by(name=name, user_id=user_id).delete()
+                db.commit()
+                return DocumentModel.model_validate(doc_to_be_deleted) if doc_to_be_deleted else None
+                # return doc_to_be_deleted
         except:
-            return None
+            return False
 
-Documents = DocumentsTable(DB)
+Documents = DocumentsTable()

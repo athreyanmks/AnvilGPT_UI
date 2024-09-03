@@ -1,14 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from peewee import *
 from playhouse.shortcuts import model_to_dict
 from typing import List, Union, Optional
+from sqlalchemy import PrimaryKeyConstraint, String, Column, BigInteger, Text
 import time
 import logging
 
 from utils.utils import decode_token
 from utils.misc import get_gravatar_url
 
-from apps.webui.internal.db import DB
+from apps.webui.internal.db import Base, JSONField, Session, get_db
 
 import json
 
@@ -18,19 +19,22 @@ log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MODELS"])
 
 ####################
-# Collections DB Schema
+# Collections db Schema
 ####################
 
 
-class Collection(Model):
-    collection_name = CharField()
-    user_id = CharField()
-
-    class Meta:
-        database = DB
+class Collection(Base):
+    __tablename__ = 'collection'
+    __table_args__ = (
+        PrimaryKeyConstraint('collection_name', 'user_id'),
+    )
+    collection_name = Column(String)
+    user_id = Column(String)
 
 
 class CollectionModel(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     collection_name: str
     user_id: str
 
@@ -60,53 +64,51 @@ class CollectionResponse(BaseModel):
 
 
 class CollectionsTable:
-    def __init__(self, db):
-        self.db = db
-        self.db.create_tables([Collection])
-
     def insert_new_collection(
         self, user_id: str, collection_name:str
     ):
-        document = CollectionModel(
-            **{
-                "collection_name": collection_name,
-                "user_id": user_id,
-            }
-        )
+        with get_db() as db:
 
-        collections = Collection.select().where((Collection.collection_name == collection_name) & (Collection.user_id == user_id))
-        if len(collections) == 0:
-            try:
-                # print("Here6")
-                result = Collection.create(**document.model_dump())
-                # print(result)
-                # print("########")
-                if result:
-                    return True
-                else:
-                    return False
-            except:
-                return False
-        else:
-            return False    
+            collection = CollectionModel(
+                **{
+                    "collection_name": collection_name,
+                    "user_id": user_id,
+                }
+            )
+            collections_existing = db.query(Collection).filter_by(collection_name=collection_name, user_id=user_id).all()
+            if len(collections_existing) == 0:
+                try:
+                    result = Collection(**collection.model_dump())
+                    db.add(result)
+                    db.commit()
+                    db.refresh(result)
+                    if result:
+                        return True
+                    else:
+                        return None
+                except:
+                    return None
+            else:
+                True   
         
     def get_collections_of_user(self, user_id: str) -> List[CollectionModel]:
-        # try:
-            results  = Collection.select()
-            # for result in results:
-            #     print(result.collection_name)
-            #     print(result.user_id)
-            temp =  [
-            CollectionModel(**model_to_dict(collection))
-            for collection in Collection.select().where(Collection.user_id == user_id)
-            ]
-            # print("Heyo")
-            # print(temp)
-            return temp
+        try:
+            with get_db() as db:
+                # for result in results:
+                #     print(result.collection_name)
+                #     print(result.user_id)
+                temp = [
+                CollectionModel.model_validate(col) for col in db.query(Collection).filter_by(user_id=user_id).all()
+                ]
+                  
+                print("Heyo")
+                print(temp)
+                return temp
 
-        # except:
-        #     return None
+        except Exception as e:
+            print(e)
+            return None
 
     
 
-Collections = CollectionsTable(DB)
+Collections = CollectionsTable()

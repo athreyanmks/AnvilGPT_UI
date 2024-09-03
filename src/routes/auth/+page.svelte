@@ -104,6 +104,7 @@
 		if (($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false) {
 			await signInHandler();
 		}
+		// console.log($config)
 	});
 </script>
 
@@ -261,18 +262,19 @@
 											</button>
 									</div>
 							
-								{#if mode === 'signin'}
-									<div class=" mt-4 text-sm text-center">
-										<button
-										class=" font-medium underline"
-												type="button"
-												on:click={() => {
-													mode  = 'forgetpassword'
-												}}
-										>
-											Forget Password
-										</button>
-									</div>
+									{#if mode === 'signin'}
+										<div class=" mt-4 text-sm text-center">
+											<button
+											class=" font-medium underline"
+													type="button"
+													on:click={() => {
+														mode  = 'forgetpassword'
+													}}
+											>
+												Forget Password
+											</button>
+										</div>
+									{/if}
 								{/if}
 							</div>
 						{/if}

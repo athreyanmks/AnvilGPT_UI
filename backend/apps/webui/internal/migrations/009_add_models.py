@@ -53,6 +53,9 @@ def migrate(migrator: Migrator, database: pw.Database, *, fake=False):
 
         class Meta:
             table_name = "model"
+            indexes = (
+            (('id', 'user_id'), True),
+        )
 
 
 def rollback(migrator: Migrator, database: pw.Database, *, fake=False):
