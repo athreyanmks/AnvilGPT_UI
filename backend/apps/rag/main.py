@@ -20,9 +20,9 @@ import sys
 
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet",package])
-install('langchain_postgres')
-install("psycopg[binary,pool]")
-install("langchain_huggingface")
+install('langchain_postgres==0.0.11')
+install("psycopg[binary,pool]==3.1.18")
+install("langchain_huggingface==0.0.3")
 
 from chromadb.utils.batch_utils import create_batches
 from langchain_core.documents import Document as LangChainDocument
@@ -635,9 +635,15 @@ def query_doc_handler(
 ):
     print("querying handler")
     try:
+        collection_name = form_data.collection_name
+        # if collection_name == None:
+        #     collection_name = user.id
+        # else:
+        #     collection_name = collection_name + user.id
+
         if app.state.config.ENABLE_RAG_HYBRID_SEARCH:
             return query_doc_with_hybrid_search(
-                collection_name=form_data.collection_name,
+                collection_name=collection_name,
                 query=form_data.query,
                 embedding_function=app.state.EMBEDDING_FUNCTION,
                 k=form_data.k if form_data.k else app.state.config.TOP_K,
@@ -648,7 +654,7 @@ def query_doc_handler(
             )
         else:
             return query_doc(
-                collection_name=form_data.collection_name,
+                collection_name=collection_name,
                 query=form_data.query,
                 embedding_function=app.state.EMBEDDING_FUNCTION,
                 k=form_data.k if form_data.k else app.state.config.TOP_K,
@@ -675,9 +681,16 @@ def query_collection_handler(
     user=Depends(get_verified_user),
 ):
     try:
+        collection_names = form_data.collection_names
+        # for collection_name in collection_names:
+        #     if collection_name == None:
+        #         collection_name = user.id
+        #     else:
+        #         collection_name = collection_name + user.id
+
         if app.state.config.ENABLE_RAG_HYBRID_SEARCH:
             return query_collection_with_hybrid_search(
-                collection_names=form_data.collection_names,
+                collection_names=collection_names,
                 query=form_data.query,
                 embedding_function=app.state.EMBEDDING_FUNCTION,
                 k=form_data.k if form_data.k else app.state.config.TOP_K,
@@ -688,7 +701,7 @@ def query_collection_handler(
             )
         else:
             return query_collection(
-                collection_names=form_data.collection_names,
+                collection_names=collection_names,
                 query=form_data.query,
                 embedding_function=app.state.EMBEDDING_FUNCTION,
                 k=form_data.k if form_data.k else app.state.config.TOP_K,
@@ -714,8 +727,10 @@ def store_youtube_video(form_data: UrlForm, user=Depends(get_verified_user)):
         data = loader.load()
 
         collection_name = form_data.collection_name
-        if collection_name == "":
-            collection_name = calculate_sha256_string(form_data.url)[:63]
+        # if collection_name == None:
+        #     collection_name = user.id
+        # else:
+        #     collection_name = collection_name + user.id
 
         store_data_in_vector_db(data, collection_name, overwrite=True)
         return {
@@ -742,8 +757,10 @@ def store_web(form_data: UrlForm, user=Depends(get_verified_user)):
         data = loader.load()
 
         collection_name = form_data.collection_name
-        if collection_name == "":
-            collection_name = calculate_sha256_string(form_data.url)[:63]
+        # if collection_name == None:
+        #     collection_name = user.id
+        # else:
+        #     collection_name = collection_name + user.id
 
         store_data_in_vector_db(data, collection_name, overwrite=True)
         return {
@@ -897,8 +914,10 @@ def store_web_search(form_data: SearchForm, user=Depends(get_current_user)):
         data = loader.load()
 
         collection_name = form_data.collection_name
-        if collection_name == "":
-            collection_name = calculate_sha256_string(form_data.query)[:63]
+        # if collection_name == None:
+        #     collection_name = user.id
+        # else:
+        #     collection_name = collection_name + user.id
 
         store_data_in_vector_db(data, collection_name, overwrite=True)
         return {
@@ -1041,8 +1060,10 @@ def store_web_search(form_data: SearchForm, user=Depends(get_verified_user)):
         data = loader.load()
 
         collection_name = form_data.collection_name
-        if collection_name == "":
-            collection_name = calculate_sha256_string(form_data.query)[:63]
+        # if collection_name == None:
+        #     collection_name = user.id
+        # else:
+        #     collection_name = collection_name + user.id
 
         store_data_in_vector_db(data, collection_name, overwrite=True)
         return {
@@ -1071,7 +1092,7 @@ def store_data_in_vector_db(
     docs = text_splitter.split_documents(data)
 
     if len(docs) > 0:
-        log.info(f"store_data_in_vector_db {docs}")
+        # log.info(f"store_data_in_vector_db {docs}")
         return store_docs_in_vector_db(docs, collection_name, metadata, overwrite), None
     else:
         raise ValueError(ERROR_MESSAGES.EMPTY_CONTENT)
@@ -1092,7 +1113,8 @@ def store_text_in_vector_db(
 def store_docs_in_vector_db(
     docs, collection_name, metadata: Optional[dict] = None, overwrite: bool = False
 ) -> bool:
-    log.info(f"store_docs_in_vector_db {docs} {collection_name}")
+    log.info(f"store_docs_in_vector_db ")
+            #  {docs} {collection_name}")
 
     texts = [doc.page_content for doc in docs]
     metadatas = [{**doc.metadata, **(metadata if metadata else {})} for doc in docs]
@@ -1166,7 +1188,7 @@ def store_docs_in_vector_db(
             embedding_texts = list(map(lambda x: x.replace("\n", " "), texts))
             embeddings = embedding_func(embedding_texts)
 
-            print(collection_name)
+            # print(collection_name)
 
             vectorDB = PGVector(
                 embeddings=embedding_func,
@@ -1388,6 +1410,7 @@ def store_doc(
     # "https://www.gutenberg.org/files/1727/1727-h/1727-h.htm"
 
     log.info(f"file.content_type: {file.content_type}")
+    log.info(f"file.content_type: {file.filename}")
     try:
         unsanitized_filename = file.filename
         filename = os.path.basename(unsanitized_filename)
@@ -1400,8 +1423,6 @@ def store_doc(
             f.close()
 
         f = open(file_path, "rb")
-        if collection_name == None:
-            collection_name = calculate_sha256(f)[:63]
         f.close()
 
         loader, known_type = get_loader(filename, file.content_type, file_path)
@@ -1425,6 +1446,7 @@ def store_doc(
             )
     except Exception as e:
         log.exception(e)
+        log.info(f"Errored File: {file.filename}")
         if "No pandoc was found" in str(e):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1449,8 +1471,7 @@ def delete_doc(
 
 
         # f = open(file_path, "rb")
-        if collection_name == None:
-            collection_name = calculate_sha256(collection_name)[:63]
+
         # f.close()
 
 
@@ -1500,8 +1521,10 @@ def process_doc(
         f = open(file_path, "rb")
 
         collection_name = form_data.collection_name
-        if collection_name == None:
-            collection_name = calculate_sha256(f)[:63]
+        # if collection_name == None:
+        #     collection_name = user.id
+        # else:
+        #     collection_name = collection_name + user.id
         f.close()
 
         loader, known_type = get_loader(
@@ -1562,8 +1585,10 @@ def process_doc(
         f = open(file_path, "rb")
 
         collection_name = form_data.collection_name
-        if collection_name == None:
-            collection_name = calculate_sha256(f)[:63]
+        # if collection_name == None:
+        #     collection_name = user.id
+        # else:
+        #     collection_name = collection_name + user.id
         f.close()
 
         loader, known_type = get_loader(
@@ -1620,8 +1645,10 @@ def store_text(
 ):
 
     collection_name = form_data.collection_name
-    if collection_name == None:
-        collection_name = calculate_sha256_string(form_data.content)
+    # if collection_name == None:
+    #     collection_name = user.id
+    # else:
+    #     collection_name = collection_name + user.id
 
     result = store_text_in_vector_db(
         form_data.content,

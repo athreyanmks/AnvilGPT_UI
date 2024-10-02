@@ -81,7 +81,7 @@ async def update_model_by_id_and_user(
     form_data: ModelForm,
     user=Depends(get_verified_user),
 ):
-    model = Models.get_model_by_id_and_user(id)
+    model = Models.get_model_by_id_and_user(id, user.id)
     if model:
         model = Models.update_model_by_id_and_user(id, form_data)
         return model

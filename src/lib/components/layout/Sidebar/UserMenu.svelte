@@ -5,9 +5,10 @@
 	import { flyAndScale } from '$lib/utils/transitions';
 	import { goto } from '$app/navigation';
 	import ArchiveBox from '$lib/components/icons/ArchiveBox.svelte';
-	import { showSettings, activeUserCount, USAGE_POOL } from '$lib/stores';
+	import { showSettings, activeUserCount, USAGE_POOL, pendingUserCount } from '$lib/stores';
 	import { fade, slide } from 'svelte/transition';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
+	import Badge from '@smui-extra/badge';
 
 	const i18n = getContext('i18n');
 
@@ -131,6 +132,10 @@
 						</svg>
 					</div>
 					<div class=" self-center font-medium">{$i18n.t('Admin Panel')}</div>
+					<span class="notification-badge">
+						<Badge aria-label="unread content count" >{$pendingUserCount}</Badge>
+
+					</span>
 				</button>
 			{/if}
 

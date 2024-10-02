@@ -28,13 +28,15 @@
 		content: null
 	};
 
-	const uploadDoc = async (file, tags,collection_name) => {
+	const uploadDoc = async (file, tags, collection_name) => {
+		console.log(file.name)
 		const res = await uploadDocToVectorDB(localStorage.token, collection_name, file).catch((error) => {
 			toast.error(error);
 			return null;
 		});
 
-		console.log("Here")
+		// console.log("Here")
+		// console.log(collection_name)
 
 		if (res) {
 			await createNewDoc(
@@ -79,7 +81,7 @@
 		} else {
 			toast.error($i18n.t(`File not found.`));
 		}
-
+		collection_name = ""
 		show = false;
 		documents.set(await getDocs(localStorage.token));
 	};
@@ -95,6 +97,10 @@
 	const deleteTagHandler = async (tagName) => {
 		tags = tags.filter((tag) => tag.name !== tagName);
 	};
+
+	function empty_collection_name(){
+		return collection_name == ""
+	}
 
 	onMount(() => {});
 </script>
@@ -137,6 +143,7 @@
 							bind:files={inputFiles}
 							type="file"
 							multiple
+							required
 						/>
 
 
@@ -164,6 +171,7 @@
 							type="text"
 							bind:value ={collection_name}
 							autocomplete="on"
+							required
 							/>
 						</div>
 					</div>

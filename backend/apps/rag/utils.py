@@ -15,11 +15,8 @@ from huggingface_hub import snapshot_download
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 from langchain_community.retrievers import BM25Retriever
-from langchain.retrievers import (
-    ContextualCompressionRetriever,
-    EnsembleRetriever,
-)
-
+from langchain.retrievers import ContextualCompressionRetriever, EnsembleRetriever
+# 
 from typing import Optional
 
 from utils.misc import get_last_user_message, add_or_update_system_message
@@ -81,7 +78,7 @@ def query_doc(
         try:
             print("In pgvector DB")
             connection_string = VECTOR_DATABASE_METHOD+"://postgres:"+DATABASE_SECRET+"@"+ DATABASE_HOST + ":" + str(DATABASE_PORT) + "/" + VECTOR_DATABASE_NAME
-            
+            print(collection_name)
             vectorDB = PGVector(
                 embeddings=embedding_function,
                 collection_name = collection_name,
@@ -144,7 +141,9 @@ def query_doc_with_hybrid_search(
                 base_compressor=compressor, base_retriever=ensemble_retriever
             )
 
+            # result = ensemble_retriever.invoke(query)
             result = compression_retriever.invoke(query)
+            
             result = {
                 "distances": [[d.metadata.get("score") for d in result]],
                 "documents": [[d.page_content for d in result]],
@@ -168,7 +167,7 @@ def query_doc_with_hybrid_search(
                 use_jsonb=True
             )
             print("QHere")
-            docs = vectorDB.similarity_search_by_vector(embedding_function(""))  # get all documents
+            docs = vectorDB.similarity_search_by_vector(embedding_function(query))  # get all documents
             print("QHere1.5")
             texts = [doc.page_content for doc in docs]
             metadatas = [doc.metadata for doc in docs]
@@ -196,10 +195,11 @@ def query_doc_with_hybrid_search(
                 base_compressor=compressor, base_retriever=ensemble_retriever
             )
             print("QHere5")
+            # result = ensemble_retriever.invoke(query)
             result = compression_retriever.invoke(query)
             print("QHere6")
             result = {
-                "distances": [[d.metadata.get("score") for d in result]],
+                "distances": [[1 for d in result]],
                 "documents": [[d.page_content for d in result]],
                 "metadatas": [[d.metadata for d in result]],
             }
@@ -570,7 +570,6 @@ from typing import Optional, Sequence
 
 from langchain_core.documents import BaseDocumentCompressor, Document
 from langchain_core.callbacks import Callbacks
-from langchain_core.pydantic_v1 import Extra
 
 
 class RerankCompressor(BaseDocumentCompressor):
@@ -580,7 +579,7 @@ class RerankCompressor(BaseDocumentCompressor):
     r_score: float
 
     class Config:
-        extra = Extra.forbid
+        extra = 'allow'
         arbitrary_types_allowed = True
 
     def compress_documents(

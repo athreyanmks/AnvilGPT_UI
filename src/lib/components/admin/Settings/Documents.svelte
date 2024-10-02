@@ -333,18 +333,19 @@
 						bind:value={embeddingEngine}
 						placeholder="Select an embedding model engine"
 						on:change={(e) => {
-							if (e.target.value === 'ollama') {
-								embeddingModel = '';
-							} else if (e.target.value === 'openai') {
-								embeddingModel = 'text-embedding-3-small';
-							} else if (e.target.value === '') {
-								embeddingModel = 'sentence-transformers/all-MiniLM-L6-v2';
-							}
+							// if (e.target.value === 'ollama') {
+							// 	embeddingModel = '';
+							// } else if (e.target.value === 'openai') {
+							// 	embeddingModel = 'text-embedding-3-small';
+							// } else if (e.target.value === '') {
+							// 	embeddingModel = 'sentence-transformers/all-MiniLM-L6-v2';
+							// }
+							embeddingModel = 'sentence-transformers/all-MiniLM-L6-v2'
 						}}
 					>
-						<option value="">{$i18n.t('Default (SentenceTransformers)')}</option>
-						<option value="ollama">{$i18n.t('Ollama')}</option>
-						<option value="openai">{$i18n.t('OpenAI')}</option>
+						<option value="" selected>{$i18n.t('Default (SentenceTransformers)')}</option>
+						<!-- <option value="ollama">{$i18n.t('Ollama')}</option>
+						<option value="openai">{$i18n.t('OpenAI')}</option> -->
 					</select>
 				</div>
 			</div>
@@ -409,7 +410,7 @@
 
 		<div class="space-y-2" />
 		<div>
-			<div class=" mb-2 text-sm font-medium">{$i18n.t('Embedding Model')}</div>
+			<!-- <div class=" mb-2 text-sm font-medium">{$i18n.t('Embedding Model')}</div>
 
 			{#if embeddingEngine === 'ollama'}
 				<div class="flex w-full">
@@ -503,7 +504,7 @@
 				{$i18n.t(
 					'Warning: If you update or change your embedding model, you will need to re-import all documents.'
 				)}
-			</div>
+			</div> -->
 
 			{#if querySettings.hybrid === true}
 				<div class=" ">

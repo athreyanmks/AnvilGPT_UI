@@ -90,7 +90,7 @@ class EndpointFilter(logging.Filter):
 logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
 
 
-WEBUI_NAME = os.environ.get("WEBUI_NAME", "Open WebUI")
+WEBUI_NAME = os.environ.get("WEBUI_NAME", "AnvilGPT UI")
 if WEBUI_NAME != "Open WebUI":
     WEBUI_NAME += " (Open WebUI)"
 
@@ -400,6 +400,18 @@ OAUTH_CLIENT_SECRET = PersistentConfig(
     os.environ.get("OAUTH_CLIENT_SECRET", ""),
 )
 
+OAUTH_AUTHORIZE_URL = PersistentConfig(
+    "OAUTH_AUTHORIZE_URL",
+    "oauth.oidc.authorize_url",
+    os.environ.get("OAUTH_AUTHORIZE_URL", ""),
+)
+
+OAUTH_SELECTED_IDP = PersistentConfig(
+    "OAUTH_SELECTED_IDP",
+    "oauth.oidc.selected_idp",
+    os.environ.get("OAUTH_SELECTED_IDP", ""),
+)
+
 OPENID_PROVIDER_URL = PersistentConfig(
     "OPENID_PROVIDER_URL",
     "oauth.oidc.provider_url",
@@ -469,6 +481,8 @@ def load_oauth_providers():
         OAUTH_PROVIDERS["oidc"] = {
             "client_id": OAUTH_CLIENT_ID.value,
             "client_secret": OAUTH_CLIENT_SECRET.value,
+            "authorize_url": OAUTH_AUTHORIZE_URL.value,
+            "selected_idp": OAUTH_SELECTED_IDP.value,
             "server_metadata_url": OPENID_PROVIDER_URL.value,
             "scope": OAUTH_SCOPES.value,
             "name": OAUTH_PROVIDER_NAME.value,

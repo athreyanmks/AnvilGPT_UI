@@ -372,6 +372,15 @@
 							{/if}
 						</div>
 					{/if}
+					<div>
+						<div class="disclaimer">
+							<strong>Disclaimer:</strong> Note this service is a pilot and provides only limited safety measures.  Models may hallucinate or generate offensive content.
+							<strong>Warning:</strong> AnvilGPT should not be used for any illegal, harmful, or violent purposes. Do not input, by any method, any data into these systems that your research institution would consider sensitive or proprietary. Do not input, by any method, any data into these systems that is regulated by State or Federal Law. This includes, but is not limited to, HIPAA data, Export Controlled data, personal identification numbers (e.g. SSNs) or biometric data.
+						</div>
+						<!-- <div class="disclaimer">
+							<strong>Warning:</strong> AnvilGPT should not be used for any illegal, harmful, or violent purposes. Do not input, by any method, any data into these systems that your research institution would consider sensitive or proprietary. Do not input, by any method, any data into these systems that is regulated by State or Federal Law. This includes, but is not limited to, HIPAA data, Export Controlled data, personal identification numbers (e.g. SSNs) or biometric data.
+						</div> -->
+					</div>
 				</div>
 			{/if}
 		</div>
@@ -384,4 +393,11 @@
 			Ubuntu, Cantarell, 'Noto Sans', sans-serif, 'Helvetica Neue', Arial, 'Apple Color Emoji',
 			'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 	}
+	.disclaimer {
+    margin-top: 20px;
+    font-size: 0.7rem;
+    color: #999;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+  }
 </style>

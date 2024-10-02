@@ -230,7 +230,7 @@ export const uploadDocToVectorDB = async (token: string, collection_name: string
 	if (error) {
 		throw error;
 	}
-	console.log(res.vector_ids.toString())
+	// console.log(res.vector_ids.toString())
 
 	return res;
 };

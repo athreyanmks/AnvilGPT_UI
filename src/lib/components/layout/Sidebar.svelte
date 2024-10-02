@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
+	// import { Badge, Button } from 'flowbite-svelte';
 	import {
 		user,
 		chats,
@@ -11,7 +12,8 @@
 		showSidebar,
 		mobile,
 		showArchivedChats,
-		pinnedChats
+		pinnedChats,
+		pendingUserCount
 	} from '$lib/stores';
 	import { onMount, getContext, tick } from 'svelte';
 
@@ -193,6 +195,9 @@
 	const focusEdit = async (node: HTMLInputElement) => {
 		node.focus();
 	};
+
+	import Badge from '@smui-extra/badge';
+
 </script>
 
 <ArchivedChatsModal
@@ -559,9 +564,20 @@
 									class=" max-w-[30px] object-cover rounded-full"
 									alt="User profile"
 								/>
+								
 							</div>
-							<div class=" self-center font-medium">{$user.name}</div>
+							<div class=" self-center font-medium">{$user.name}
+								
+							</div>
+							<span class="notification-badge">
+								<Badge aria-label="unread content count" >{$pendingUserCount}</Badge>
+
+							</span>
+							
+
+							
 						</button>
+						
 					</UserMenu>
 				{/if}
 			</div>
@@ -577,5 +593,12 @@
 	}
 	.scrollbar-hidden::-webkit-scrollbar-thumb {
 		visibility: hidden;
+	}
+	.notification-badge{
+		border-radius:50%;
+		aspect-ratio: 1/1;
+		width: auto;
+		height: 1.2rem;
+		background: #ff5b4f;
 	}
 </style>

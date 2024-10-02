@@ -779,3 +779,15 @@ export const bestMatchingLanguage = (supportedLanguages, preferredLanguages, def
 	console.log(languages, preferredLanguages, match, defaultLocale);
 	return match || defaultLocale;
 };
+
+export const getPendingUserCount = (users) => {
+	let count = 0;
+
+	for (const user of users){
+		if(user.role == "pending"){
+			count +=1;
+		}
+	}
+
+	return count;
+}

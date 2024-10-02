@@ -15,7 +15,8 @@
 		mobile,
 		socket,
 		activeUserCount,
-		USAGE_POOL
+		USAGE_POOL,
+		pendingUserCount
 	} from '$lib/stores';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -31,7 +32,8 @@
 
 	import { WEBUI_BASE_URL, WEBUI_HOSTNAME } from '$lib/constants';
 	import i18n, { initI18n, getLanguages } from '$lib/i18n';
-	import { bestMatchingLanguage } from '$lib/utils';
+	import { bestMatchingLanguage, getPendingUserCount } from '$lib/utils';
+	import { getUsers } from '$lib/apis/users';
 
 	setContext('i18n', i18n);
 
@@ -190,10 +192,14 @@
 			document.getElementById('splash-screen')?.remove();
 			loaded = true;
 		}
-
+		let users = await getUsers(localStorage.token);
+		// console.log(users)
+		$pendingUserCount = await getPendingUserCount(users);
+		// console.log($pendingUserCount)
 		return () => {
 			window.removeEventListener('resize', onResize);
 		};
+
 	});
 </script>
 

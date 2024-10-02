@@ -2127,6 +2127,10 @@ for provider_name, provider_config in OAUTH_PROVIDERS.items():
         client_kwargs={
             "scope": provider_config["scope"],
         },
+        authorize_url=provider_config['authorize_url'],
+        authorize_params={
+            'selected_idp': provider_config['selected_idp']
+        },
         redirect_uri=provider_config["redirect_uri"],
     )
 

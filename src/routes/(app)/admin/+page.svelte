@@ -1,6 +1,7 @@
 <script>
 	import { WEBUI_BASE_URL } from '$lib/constants';
-	import { WEBUI_NAME, config, user, showSidebar } from '$lib/stores';
+	import { WEBUI_NAME, config, user, showSidebar, pendingUserCount } from '$lib/stores';
+	import {getPendingUserCount} from '$lib/utils';
 	import { goto } from '$app/navigation';
 	import { onMount, getContext } from 'svelte';
 
@@ -45,6 +46,7 @@
 
 		if (res) {
 			users = await getUsers(localStorage.token);
+			$pendingUserCount = await getPendingUserCount(users);
 		}
 	};
 
@@ -55,6 +57,7 @@
 		});
 		if (res) {
 			users = await getUsers(localStorage.token);
+			$pendingUserCount = await getPendingUserCount(users);
 			toast.success($i18n.t('Successfully updated.'));
 		}
 	};
@@ -66,6 +69,7 @@
 		});
 		if (res) {
 			users = await getUsers(localStorage.token);
+			$pendingUserCount = await getPendingUserCount(users);
 		}
 	};
 
@@ -74,6 +78,9 @@
 			await goto('/');
 		} else {
 			users = await getUsers(localStorage.token);
+			console.log(users)
+			$pendingUserCount = await getPendingUserCount(users);
+			console.log($pendingUserCount)
 		}
 		loaded = true;
 	});
@@ -112,6 +119,7 @@
 	bind:show={showAddUserModal}
 	on:save={async () => {
 		users = await getUsers(localStorage.token);
+		$pendingUserCount = await getPendingUserCount(users);
 	}}
 />
 <!-- <UserChatsModal bind:show={showUserChatsModal} user={selectedUser} /> -->
