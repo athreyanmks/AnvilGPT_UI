@@ -23,7 +23,6 @@ def install(package):
 install('langchain_postgres==0.0.11')
 install("psycopg[binary,pool]==3.1.18")
 install("langchain_huggingface==0.0.3")
-install("python-magic-bin")
 
 from chromadb.utils.batch_utils import create_batches
 from langchain_core.documents import Document as LangChainDocument
