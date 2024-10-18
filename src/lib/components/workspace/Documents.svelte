@@ -5,8 +5,8 @@
 
 	import { onMount, getContext } from 'svelte';
 	import { WEBUI_NAME, documents, showSidebar, collection_filtered_documents, created_collections } from '$lib/stores';
-	import { createNewDoc, deleteDocByName, getDocs, getCollections } from '$lib/apis/documents';
-
+	import { createNewDoc, deleteDocByName, getDocs } from '$lib/apis/documents';
+	import { getCollections } from '$lib/apis/collections';
 	import { SUPPORTED_FILE_TYPE, SUPPORTED_FILE_EXTENSIONS } from '$lib/constants';
 	import { processDocToVectorDB, uploadDocToVectorDB, deleteDocFromVectorDB } from '$lib/apis/rag';
 	import { blobToFile, transformFileName } from '$lib/utils';
@@ -111,6 +111,8 @@
 		const dropZone = document.querySelector('body');
 		// console.log(documents)
 		// console.log("Herereereee")
+		// created_collections.set(getCollections(localStorage.token));
+		console.log($created_collections)
 
 		const onDragOver = (e) => {
 			e.preventDefault();

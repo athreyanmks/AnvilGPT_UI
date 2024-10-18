@@ -12,10 +12,15 @@ from utils.misc import get_gravatar_url
 
 
 from apps.webui.internal.db import Base, JSONField, Session, get_db
+# from apps.rag.main import store_docs_in_vector_db, delete_docs_from_vector_db, get_loader
 
 import json
+import magic
 
-from config import SRC_LOG_LEVELS
+from config import (
+    SRC_LOG_LEVELS,
+    UPLOAD_DIR,
+);
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MODELS"])
@@ -73,6 +78,8 @@ class DocumentResponse(BaseModel):
 class DocumentUpdateForm(BaseModel):
     name: str
     title: str
+    collection_name: str
+    vector_ids: str
 
 
 class DocumentForm(DocumentUpdateForm):
@@ -125,17 +132,34 @@ class DocumentsTable:
             with get_db() as db:
 
                 document = db.query(Document).filter_by(name=name, user_id=user_id).first()
-                # print("Here5")
+                print("Here5")
                 # print(len(document))
-                if len(document) == 0:
-                    return None
-                else:
+                if document:
                     # print(document)
                     # print("########")
                     result =  DocumentModel.model_validate(document) if document else None
                     # print(result)
                     # print("########")
                     return result
+                    
+                else:
+                    return None
+                   
+        except Exception as e:
+            print(e)
+            return None
+    
+    def get_docs_by_user_and_collection(self, user_id: str, collection_name: str) -> int:
+        try:
+            with get_db() as db:
+
+                document = db.query(Document).filter_by(collection_name=collection_name, user_id=user_id).all()
+                # print("Here5")
+                # print(len(document))
+                if document == None:
+                    return None
+                else:
+                    return len(document)
         except:
             return None
 
@@ -188,12 +212,39 @@ class DocumentsTable:
     ) -> Optional[DocumentModel]:
         try:
             with get_db() as db:
+                # print(form_data)
+
+                # doc_to_be_updated = DocumentModel.model_validate(db.query(Document).filter_by(name=name, user_id=user_id).first())
+                # old_collection = doc_to_be_updated.collection_name
+                # vector_ids = doc_to_be_updated.vector_ids
+
+                # if form_data.collection_name != old_collection:
+                #     filename =  doc_to_be_updated.filename
+
+                #     file_path = f"{UPLOAD_DIR}/{filename}"
+
+                #     mime = magic.Magic(mime=True)
+                #     mime_type = mime.from_file(file_path)
+
+                #     f = open(file_path, "rb")
+                #     f.close()
+
+                #     loader, known_type = get_loader(filename, mime_type, file_path)
+                #     data = loader.load()
+
+                #     result = store_docs_in_vector_db(data, form_data.collection_name)
+
+                #     delete_docs_from_vector_db(old_collection, vector_ids)
+
+                #     vector_ids = result
 
                 db.query(Document).filter_by(name=name, user_id=user_id).update(
                     {
                         "title": form_data.title,
                         "name": form_data.name,
+                        "collection_name": form_data.collection_name,
                         "timestamp": int(time.time()),
+                        "vector_ids": form_data.vector_ids
                     }
                 )
                 db.commit()

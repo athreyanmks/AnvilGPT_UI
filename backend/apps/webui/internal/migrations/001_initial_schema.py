@@ -106,11 +106,14 @@ def migrate_sqlite(migrator: Migrator, database: pw.Database, *, fake=False):
     @migrator.create_model
     class Collections(pw.Model):
         id = pw.AutoField()
-        collection_name = pw.CharField(max_length=255, unique=True)
+        collection_name = pw.CharField(max_length=255, unique=False)
         user_id = pw.CharField(max_length=255)
 
         class Meta:
             table_name = "collection"
+            indexes = (
+                (('collection_name', 'user_id'), True),
+            )
 
     @migrator.create_model
     class Modelfile(pw.Model):
@@ -220,11 +223,14 @@ def migrate_external(migrator: Migrator, database: pw.Database, *, fake=False):
     @migrator.create_model
     class Collections(pw.Model):
         id = pw.AutoField()
-        collection_name = pw.CharField(max_length=255, unique=True)
+        collection_name = pw.CharField(max_length=255, unique=False)
         user_id = pw.CharField(max_length=255)
 
         class Meta:
             table_name = "collection"
+            indexes = (
+                (('collection_name', 'user_id'), True),
+            )
 
     @migrator.create_model
     class Modelfile(pw.Model):

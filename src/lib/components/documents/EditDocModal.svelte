@@ -9,6 +9,8 @@
 	import TagInput from '../common/Tags/TagInput.svelte';
 	import Tags from '../common/Tags.svelte';
 	import { addTagById } from '$lib/apis/chats';
+	import {created_collections } from '$lib/stores';
+
 
 	const i18n = getContext('i18n');
 
@@ -16,17 +18,31 @@
 	export let selectedDoc;
 
 	let tags = [];
+	let selectedCollection = null;
+	let customCollection = '';
+	let collections = [];
+	let showCustomInput = false;
 
 	let doc = {
 		name: '',
 		title: '',
+		collection_name :'',
 		content: null
 	};
+
+	$:{
+		created_collections.subscribe(currentItems => {
+      collections = currentItems.map(item => item.collection_name);
+		});
+		console.log(collections)
+
+	}
 
 	const submitHandler = async () => {
 		const res = await updateDocByName(localStorage.token, selectedDoc.name, {
 			title: doc.title,
-			name: doc.name
+			name: doc.name,
+			collection_name : selectedCollection
 		}).catch((error) => {
 			toast.error(error);
 		});
@@ -64,13 +80,39 @@
 		documents.set(await getDocs(localStorage.token));
 	};
 
+	function handleSelection(event) {
+    const value = event.target.value;
+    if (value === 'NewCollection') {
+      showCustomInput = true;
+    } else {
+      showCustomInput = false;
+      selectedCollection = value;
+    }
+  	}
+
+	function addCustomCollection() {
+		if (customCollection.trim()) {
+		collections = [...collections, customCollection];
+		selectedCollection = customCollection;
+		customCollection = '';
+		showCustomInput = false;
+		}
+	}
+	function setCustomCollection(){
+		selectedCollection = customCollection
+		console.log(selectedCollection)
+	}
+
 	onMount(() => {
+		console.log(selectedDoc)
 		if (selectedDoc) {
 			doc = JSON.parse(JSON.stringify(selectedDoc));
 
 			tags = doc?.content?.tags ?? [];
 		}
 	});
+
+
 </script>
 
 <Modal size="sm" bind:show>
@@ -138,7 +180,38 @@
 						</div>
 
 						<div class="flex flex-col w-full">
-							<div class=" mb-2 text-xs text-gray-500">{$i18n.t('Tags')}</div>
+							<div class=" mb-2 text-xs text-gray-500">{$i18n.t('Collection')}</div>
+	
+							<div class="flex-1 mb-1 text-m text-gray-500">
+								<!-- <label for="dropdown">Choose an option:</label> -->
+								<select id="dropdown" class = "w-7/12 rounded-xl py-2 px-4 text-sm dark:text-gray-300 dark:bg-gray-850 outline-none" on:change={handleSelection} bind:value={selectedCollection}>
+									<option value={doc.collection_name} selected>{doc.collection_name}</option>
+									{#each collections as collection}
+									{#if collection !== doc.collection_name}
+									<option value={collection}>{collection}</option>
+									{/if}
+									{/each}
+									<option value="NewCollection">New Collection</option>
+								</select>
+							</div>
+							<div class="flex-1 mb-1 text-m text-gray-500">	
+								{#if showCustomInput}
+									<div class="flex-1 mb-1 text-m text-gray-500">
+									<input 
+										type="text" 
+										class = "w-7/12 rounded-xl py-2 px-4 text-sm dark:text-gray-300 dark:bg-gray-850 outline-none"
+										placeholder="Collection Name" 
+										bind:value={customCollection}
+										on:input ={setCustomCollection} 
+									/>
+									<!-- <button on:click={addCustomCollection}>Add</button> -->
+									</div>
+								{/if}
+							</div>
+						</div>
+
+						<div class="flex flex-col w-full">
+							<div class=" mb-3 text-xs text-gray-500">{$i18n.t('Tags')}</div>
 
 							<Tags {tags} addTag={addTagHandler} deleteTag={deleteTagHandler} />
 						</div>

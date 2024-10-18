@@ -78,38 +78,6 @@ export const getDocs = async (token: string = '') => {
 	return res;
 };
 
-export const getCollections = async (token: string = '') => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_API_BASE_URL}/documents/collections`, {
-		method: 'GET',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			authorization: `Bearer ${token}`
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.then((json) => {
-			return json;
-		})
-		.catch((err) => {
-			error = err.detail;
-			console.log(err);
-			return null;
-		});
-	// console.log(res)
-	if (error) {
-		console.log(res)
-		throw error;
-	}
-
-	return res;
-};
-
 export const getDocByName = async (token: string, name: string) => {
 	let error = null;
 
@@ -148,11 +116,13 @@ export const getDocByName = async (token: string, name: string) => {
 type DocUpdateForm = {
 	name: string;
 	title: string;
+	collection_name: string;
+	vector_ids: string;
 };
 
 export const updateDocByName = async (token: string, name: string, form: DocUpdateForm) => {
 	let error = null;
-
+	console.log(form)
 	const searchParams = new URLSearchParams();
 	searchParams.append('name', name);
 
@@ -165,7 +135,9 @@ export const updateDocByName = async (token: string, name: string, form: DocUpda
 		},
 		body: JSON.stringify({
 			name: form.name,
-			title: form.title
+			title: form.title,
+			collection_name : form.collection_name,
+			vector_ids: "",
 		})
 	})
 		.then(async (res) => {

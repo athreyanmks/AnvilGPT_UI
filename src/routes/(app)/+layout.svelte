@@ -11,7 +11,9 @@
 	import { getAllChatTags } from '$lib/apis/chats';
 
 	import { getPrompts } from '$lib/apis/prompts';
-	import { getCollections, getDocs } from '$lib/apis/documents';
+	import {  getDocs } from '$lib/apis/documents';
+	import { getCollections } from '$lib/apis/collections';
+
 	import { getTools } from '$lib/apis/tools';
 
 	import { getBanners } from '$lib/apis/configs';
@@ -97,6 +99,7 @@
 				})(),
 				(async () => {
 					created_collections.set(await getCollections(localStorage.token));
+					console.log(created_collections)
 				})(),
 				// (async () => {
 				// 	tools.set(await getTools(localStorage.token));

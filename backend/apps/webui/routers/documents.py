@@ -20,7 +20,13 @@ from apps.webui.models.collections import (
 
 from apps.rag.main import delete_docs_from_vector_db
 from utils.utils import get_current_user, get_admin_user
+from apps.rag.main import store_docs_in_vector_db, delete_docs_from_vector_db, get_loader
 from constants import ERROR_MESSAGES
+import magic
+from config import (
+    UPLOAD_DIR,
+);
+
 
 router = APIRouter()
 
@@ -59,42 +65,42 @@ async def get_documents(user=Depends(get_current_user)):
     # print(docs)
     return docs
 
-@router.get("/collections", response_model=List[CollectionResponse])
-async def get_collections(user=Depends(get_current_user)):
-    # doc = Documents.get_docs_of_user(user.id)
+# @router.get("/collections", response_model=List[CollectionResponse])
+# async def get_collections(user=Depends(get_current_user)):
+#     # doc = Documents.get_docs_of_user(user.id)
 
-    # if doc:
-    # return DocumentResponse(
-    #     **{
-    #         **doc.model_dump(),
-    #         "content": json.loads(doc.content if doc.content else "{}"),
-    #     }
-    # )
-    # else:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail=ERROR_MESSAGES.NOT_FOUND,
-    #     )
+#     # if doc:
+#     # return DocumentResponse(
+#     #     **{
+#     #         **doc.model_dump(),
+#     #         "content": json.loads(doc.content if doc.content else "{}"),
+#     #     }
+#     # )
+#     # else:
+#     #     raise HTTPException(
+#     #         status_code=status.HTTP_401_UNAUTHORIZED,
+#     #         detail=ERROR_MESSAGES.NOT_FOUND,
+#     #     )
 
-    # print("HERE #################")
-    # print(Collections.get_collections_of_user(user.id))
+#     # print("HERE #################")
+#     # print(Collections.get_collections_of_user(user.id))
 
 
-    cols = [
-        CollectionResponse(
-            **{
-                **col.model_dump(),
-                "type" : "collection",
-                "title" : col.collection_name,
-                "name" : col.collection_name,
-                "collection_names" : [col.collection_name]
-            } 
-        )
-        for col in Collections.get_collections_of_user(user.id)
-        # for doc in Documents.get_docs()
-    ]
-    # print(cols)
-    return cols
+#     cols = [
+#         CollectionResponse(
+#             **{
+#                 **col.model_dump(),
+#                 "type" : "collection",
+#                 "title" : col.collection_name,
+#                 "name" : col.collection_name,
+#                 "collection_names" : [col.collection_name]
+#             } 
+#         )
+#         for col in Collections.get_collections_of_user(user.id)
+#         # for doc in Documents.get_docs()
+#     ]
+#     # print(cols)
+#     return cols
 
 
 ############################
@@ -114,7 +120,7 @@ async def create_new_doc(form_data: DocumentForm, user=Depends(get_current_user)
     # print(doc)
     # print(form_data.vector_ids)
     # print("777777777777777777")
-    Collections.insert_new_collection(user.id, form_data.collection_name)
+    print(Collections.insert_new_collection(user.id, form_data.collection_name))
     if doc == None:
         doc = Documents.insert_new_doc(user.id, form_data)
         # print(doc)
@@ -206,6 +212,36 @@ async def update_doc_by_name(
     name: str, form_data: DocumentUpdateForm, user=Depends(get_current_user)
 ):
     # doc = Documents.update_doc_by_name(name, form_data)
+    # print("Here1")
+    doc_to_be_updated = Documents.get_doc_by_name_and_user(name, user.id)
+    # print("Here2")
+    old_collection = doc_to_be_updated.collection_name
+    vector_ids = doc_to_be_updated.vector_ids
+    if form_data.collection_name != old_collection:
+        filename =  doc_to_be_updated.filename
+
+        file_path = f"{UPLOAD_DIR}/{filename}"
+
+        mime = magic.Magic(mime=True)
+        mime_type = mime.from_file(file_path)
+
+        f = open(file_path, "rb")
+        f.close()
+
+        loader, known_type = get_loader(filename, mime_type, file_path)
+        data = loader.load()
+
+        result = store_docs_in_vector_db(data, form_data.collection_name)
+
+        delete_docs_from_vector_db(old_collection, vector_ids)
+        vector_ids = ""
+        for id in result:
+            vector_ids = vector_ids + id + ","
+
+        vector_ids = vector_ids[0:-1]
+    # print("Here3")
+    form_data.vector_ids = vector_ids
+    # print(form_data)
     doc = Documents.update_doc_by_name_and_user(name, user.id, form_data)
     if doc:
         return DocumentResponse(

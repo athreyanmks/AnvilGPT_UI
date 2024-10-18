@@ -10,8 +10,10 @@
 	import Tags from '../common/Tags.svelte';
 	import { addTagById } from '$lib/apis/chats';
 	import { uploadDocToVectorDB } from '$lib/apis/rag';
+	import {getCollections} from '$lib/apis/collections';
 	import { transformFileName } from '$lib/utils';
 	import { SUPPORTED_FILE_EXTENSIONS, SUPPORTED_FILE_TYPE } from '$lib/constants';
+	import {created_collections } from '$lib/stores';
 
 	const i18n = getContext('i18n');
 
@@ -21,12 +23,24 @@
 	let inputFiles;
 	let collection_name : String;
 	let tags = [];
+	let selectedCollection = null;
+	let customCollection = '';
+	let collections = [];
+	let showCustomInput = false;
 
 	let doc = {
 		name: '',
 		title: '',
 		content: null
 	};
+
+	$:{
+		created_collections.subscribe(currentItems => {
+      collections = currentItems.map(item => item.collection_name);
+		});
+		console.log(collections)
+
+	}
 
 	const uploadDoc = async (file, tags, collection_name) => {
 		console.log(file.name)
@@ -67,12 +81,12 @@
 					SUPPORTED_FILE_TYPE.includes(file['type']) ||
 					SUPPORTED_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))
 				) {
-					uploadDoc(file, tags,collection_name);
+					uploadDoc(file, tags, selectedCollection);
 				} else {
 					toast.error(
 						`Unknown File Type '${file['type']}', but accepting and treating as plain text`
 					);
-					uploadDoc(file, tags,collection_name);
+					uploadDoc(file, tags, selectedCollection);
 				}
 			}
 
@@ -101,8 +115,32 @@
 	function empty_collection_name(){
 		return collection_name == ""
 	}
+	
+	function handleSelection(event) {
+    const value = event.target.value;
+    if (value === 'custom') {
+      showCustomInput = true;
+    } else {
+      showCustomInput = false;
+      selectedCollection = value;
+    }
+  	}
 
-	onMount(() => {});
+	function addCustomCollection() {
+		if (customCollection.trim()) {
+		collections = [...collections, customCollection];
+		selectedCollection = customCollection;
+		customCollection = '';
+		showCustomInput = false;
+		}
+	}
+	function setCustomCollection(){
+		selectedCollection = customCollection
+		console.log(selectedCollection)
+	}
+
+	onMount(() => {
+	});
 </script>
 
 <Modal size="sm" bind:show>
@@ -165,14 +203,30 @@
 					<div class="flex flex-col w-full">
 						<div class=" mb-1 text-xs text-gray-500">{$i18n.t('Collection')}</div>
 
-						<div class="flex-1">
-							<input
-							class="w-full rounded-xl py-2 px-4 text-sm dark:text-gray-300 dark:bg-gray-850 outline-none"
-							type="text"
-							bind:value ={collection_name}
-							autocomplete="on"
-							required
-							/>
+						<div class="flex-1 mb-1 text-m text-gray-500">
+							<!-- <label for="dropdown">Choose an option:</label> -->
+							<select id="dropdown" class = "w-7/12 rounded-xl py-2 px-4 text-sm dark:text-gray-300 dark:bg-gray-850 outline-none" on:change={handleSelection} bind:value={selectedCollection}>
+								<option value="" disabled>Select an option</option>
+								{#each collections as collection}
+								<option value={collection}>{collection}</option>
+								{/each}
+								<option value="custom">New Collection</option>
+							</select>
+						</div>
+						
+						<div class="flex-1 mb-1 text-m text-gray-500">
+							{#if showCustomInput}
+								<div >
+								<input 
+									type="text"
+									class = "w-7/12 rounded-xl py-2 px-4 text-sm dark:text-gray-300 dark:bg-gray-850 outline-none"
+									placeholder="Collection Name" 
+									bind:value={customCollection}
+									on:input ={setCustomCollection} 
+								/>
+								<!-- <button on:click={addCustomCollection}>Add</button> -->
+								</div>
+							{/if}
 						</div>
 					</div>
 

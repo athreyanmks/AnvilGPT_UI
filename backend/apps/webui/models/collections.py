@@ -14,6 +14,9 @@ from apps.webui.internal.db import Base, JSONField, Session, get_db
 import json
 
 from config import SRC_LOG_LEVELS
+from apps.webui.models.documents import (
+    Documents,
+)
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MODELS"])
@@ -82,14 +85,16 @@ class CollectionsTable:
                     db.add(result)
                     db.commit()
                     db.refresh(result)
+                    print(result)
                     if result:
                         return True
                     else:
                         return None
-                except:
+                except Exception as e:
+                    print(e)
                     return None
             else:
-                True   
+                False   
         
     def get_collections_of_user(self, user_id: str) -> List[CollectionModel]:
         try:
@@ -109,6 +114,21 @@ class CollectionsTable:
             print(e)
             return None
 
+    def check_empty_collection(self, user_id:str, collection_name:str) -> bool:
+        len = Documents.get_docs_by_user_and_collection(user_id,collection_name)
+        if len == 0:
+            return True
+        else:
+            return False
     
+    def delete_collection_of_user(self, user_id:str, collection_name:str) -> bool:
+        try:
+            with get_db() as db:
+                db.query(Collection).filter_by(user_id=user_id, collection_name=collection_name).delete()
+                return True
+        except Exception as e:
+            print(e)
+            return None
+
 
 Collections = CollectionsTable()

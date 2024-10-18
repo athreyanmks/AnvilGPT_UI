@@ -3,7 +3,7 @@
 
 	import { documents, created_collections } from '$lib/stores';
 	import { removeFirstHashWord, isValidHttpUrl } from '$lib/utils';
-	import { getCollections } from '$lib/apis/documents';
+	import { getCollections } from '$lib/apis/collections';
 	import { tick, getContext } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { Result } from 'postcss';

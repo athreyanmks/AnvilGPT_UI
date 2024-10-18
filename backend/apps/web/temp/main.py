@@ -5,6 +5,7 @@ from apps.webui.routers import (
     auths,
     users,
     chats,
+    collections,
     documents,
     models,
     prompts,
@@ -69,6 +70,7 @@ app.include_router(auths.router, prefix="/auths", tags=["auths"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(chats.router, prefix="/chats", tags=["chats"])
 
+app.include_router(collections.router, prefix="/collections", tags=["collections"])
 app.include_router(documents.router, prefix="/documents", tags=["documents"])
 app.include_router(models.router, prefix="/models", tags=["models"])
 app.include_router(prompts.router, prefix="/prompts", tags=["prompts"])
