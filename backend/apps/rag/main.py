@@ -24,6 +24,11 @@ install('langchain_postgres==0.0.11')
 install("psycopg[binary,pool]==3.1.18")
 install("langchain_huggingface==0.0.3")
 
+
+# install("python-magic")
+# install("python-libmagic")
+#removed line giving me trouble
+
 from chromadb.utils.batch_utils import create_batches
 from langchain_core.documents import Document as LangChainDocument
 from langchain_postgres.vectorstores import PGVector

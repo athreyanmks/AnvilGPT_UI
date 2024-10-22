@@ -70,8 +70,8 @@ async def get_collections(user=Depends(get_current_user)):
 ############################
 
 
-@router.delete("/collection/delete", response_model=Optional[CollectionResponse])
+@router.delete("/collection/delete", response_model=bool)
 async def delete_doc_by_name(collection_name: str, user=Depends(get_current_user)):
     return_val = Collections.delete_collection_of_user(user.id, collection_name)
     # delete_docs_from_vector_db()
-    return None
+    return return_val

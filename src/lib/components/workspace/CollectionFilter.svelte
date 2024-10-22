@@ -4,12 +4,13 @@
     import {documents, created_collections, collection_filtered_documents, mobile } from '$lib/stores';
 	import { flyAndScale } from '$lib/utils/transitions';
 	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
-
+	import { deleteCollectionByName } from '$lib/apis/collections';
 
 
 
     export let selected_collection = 'All Documents';
 	export let className = 'w-[30rem]';
+	let collectionCount = {};
 
     // export let collection_filtered_documents = $documents;
 
@@ -17,6 +18,13 @@
         $collection_filtered_documents = $documents
         handleCollectionChange()
     }
+	$ :{
+			collectionCount = $documents.reduce((acc, item) => {
+      acc[item.collection_name] = (acc[item.collection_name] || 0) + 1;
+      return acc;
+    }, {});
+	console.log(collectionCount)
+	}
 
 
 	let show = false;
@@ -34,6 +42,16 @@
         
 
     }
+	function handleCollectionDelete(collection_name){
+		if(collectionCount[collection_name]){
+			alert('Collection is not empty');
+			console.log(collectionCount[collection_name]);
+			console.log('Collection is not empty');
+		}
+		else{
+		deleteCollectionByName(localStorage.token, collection_name);
+		}
+	}
 </script>
 
 <!-- <h1>Select Collection</h2> -->
@@ -112,17 +130,38 @@
 			</button>
 				{#each $created_collections as collection}
 					<!-- <option value={collection.collection_name}> -->
+					 <div class="flex">
 						<button
 						aria-label="model-item"
-						class="flex w-full text-left font-medium line-clamp-1 select-none items-center rounded-button py-2 pl-3 pr-1.5 text-sm text-gray-700 dark:text-gray-100 outline-none transition-all duration-75 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg cursor-pointer data-[highlighted]:bg-muted"
+						class="flex-none w-11/12 text-left font-medium line-clamp-1 select-none items-center rounded-button py-2 pl-3 pr-1.5 text-sm text-gray-700 dark:text-gray-100 outline-none transition-all duration-75 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg cursor-pointer data-[highlighted]:bg-muted"
 						on:click={() => {
 							selected_collection = collection.collection_name;
 							handleCollectionChange()
 							show = false;
 						}}
 					>
-						{collection.collection_name}
+						{collection.collection_name} ({(collectionCount[collection.collection_name] || 0)} docs)
 					</button>
+					<button
+					class="flex-none w-1/12 text-left font-medium line-clamp-1 select-none items-center rounded-button py-2 pl-3 pr-1.5 text-sm text-gray-700 dark:text-gray-100 outline-none transition-all duration-75 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg cursor-pointer data-[highlighted]:bg-muted flex justify-center items-center"
+					on:click={() => {
+						handleCollectionDelete(collection.collection_name);
+					}}
+					disabled={collectionCount[collection.collection_name]}
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+							class="w-5 h-5"
+						>
+							<path
+								d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+							/>
+						</svg>
+					</button>
+					 </div>
+
 
 					<!-- </option> -->
 				{/each}

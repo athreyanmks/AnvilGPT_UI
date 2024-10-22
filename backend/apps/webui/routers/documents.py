@@ -22,7 +22,7 @@ from apps.rag.main import delete_docs_from_vector_db
 from utils.utils import get_current_user, get_admin_user
 from apps.rag.main import store_docs_in_vector_db, delete_docs_from_vector_db, get_loader
 from constants import ERROR_MESSAGES
-import magic
+import mimetypes
 from config import (
     UPLOAD_DIR,
 );
@@ -222,8 +222,8 @@ async def update_doc_by_name(
 
         file_path = f"{UPLOAD_DIR}/{filename}"
 
-        mime = magic.Magic(mime=True)
-        mime_type = mime.from_file(file_path)
+        mime_type, encoding = mimetypes.guess_type(file_path)
+
 
         f = open(file_path, "rb")
         f.close()

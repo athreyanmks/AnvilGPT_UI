@@ -15,7 +15,6 @@ from apps.webui.internal.db import Base, JSONField, Session, get_db
 # from apps.rag.main import store_docs_in_vector_db, delete_docs_from_vector_db, get_loader
 
 import json
-import magic
 
 from config import (
     SRC_LOG_LEVELS,

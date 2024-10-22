@@ -124,6 +124,7 @@ class CollectionsTable:
     def delete_collection_of_user(self, user_id:str, collection_name:str) -> bool:
         try:
             with get_db() as db:
+                print(user_id, collection_name)
                 db.query(Collection).filter_by(user_id=user_id, collection_name=collection_name).delete()
                 return True
         except Exception as e:
