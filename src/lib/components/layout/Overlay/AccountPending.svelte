@@ -21,22 +21,16 @@
 		<div class="m-auto pb-10 flex flex-col justify-center">
 			<div class="max-w-md">
 				<div class="text-center dark:text-white text-2xl font-medium z-50">
-					{$i18n.t('Account Activation Pending')}<br />
-					{$i18n.t('Contact Admin for WebUI Access')}
+					{$i18n.t('Account Activation Pending')}
 				</div>
 
-				<div class=" mt-4 text-center text-sm dark:text-gray-200 w-full">
-					{$i18n.t('Your account status is currently pending activation.')}<br />
-					{$i18n.t(
-						'To access the WebUI, please reach out to the administrator. Admins can manage user statuses from the Admin Panel.'
-					)}
+				<div class=" mt-4 justify-start text-sm dark:text-gray-200 w-full">
+					{$i18n.t('Your account status is currently pending. For approval, please reach out to the ACCESS help desk')} <a href="https://support.access-ci.org/open-a-ticket">(https://support.access-ci.org/open-a-ticket)</a> {$i18n.t('with the subject/summary line “AnvilGPT Access Request”. Select "Some Other Question" as the user support issue and "Anvil" as the resource.')}
+					<br /><br />
+					{$i18n.t('In the description of your ticket, provide a brief description of how you intend to use the service, your allocation number, and if you intend to use the UI, API, or both.')}
+					<br /><br />
+					{$i18n.t('An admin will assess and approve your request and get back to you.')}
 				</div>
-
-				{#if adminDetails}
-					<div class="mt-4 text-sm font-medium text-center">
-						<div>{$i18n.t('Admin')}: {adminDetails.name} ({adminDetails.email})</div>
-					</div>
-				{/if}
 
 				<div class=" mt-6 mx-auto relative group w-fit">
 					<button
