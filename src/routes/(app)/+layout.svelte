@@ -17,7 +17,9 @@
 	import { getTools } from '$lib/apis/tools';
 
 	import { getBanners } from '$lib/apis/configs';
-	import { getUserSettings } from '$lib/apis/users';
+	import { getUserSettings, getUsers } from '$lib/apis/users';
+	import {getPendingUserCount} from '$lib/utils';
+
 
 	import {
 		user,
@@ -33,6 +35,7 @@
 		showCallOverlay,
 		// tools,
 		functions,
+		pendingUserCount,
 
 		created_collections
 
@@ -99,7 +102,7 @@
 				})(),
 				(async () => {
 					created_collections.set(await getCollections(localStorage.token));
-					console.log(created_collections)
+					// console.log(created_collections)
 				})(),
 				// (async () => {
 				// 	tools.set(await getTools(localStorage.token));
@@ -114,6 +117,12 @@
 					tags.set(await getAllChatTags(localStorage.token));
 				})()
 			]);
+
+			if (['user', 'admin'].includes($user.role)) {
+				let users = await getUsers(localStorage.token);
+				$pendingUserCount = await getPendingUserCount(users);
+			}
+			
 
 			document.addEventListener('keydown', function (event) {
 				const isCtrlPressed = event.ctrlKey || event.metaKey; // metaKey is for Cmd key on Mac

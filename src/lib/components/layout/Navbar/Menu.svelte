@@ -29,7 +29,15 @@
 		console.log('download', chat);
 
 		const chatText = _chat.messages.reduce((a, message, i, arr) => {
-			return `${a}### ${message.role.toUpperCase()}\n${message.content}\n\n`;
+			let  chatNameTag = ""
+			if (message.role === 'assistant') {
+				chatNameTag = message.modelName.toUpperCase()
+			}
+			else {
+				chatNameTag = message.role.toUpperCase()
+			}
+
+			return `${a}### ${chatNameTag}\n${message.content}\n\n`;
 		}, '');
 
 		let blob = new Blob([chatText], {

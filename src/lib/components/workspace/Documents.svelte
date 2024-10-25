@@ -480,6 +480,9 @@
 						<div class=" text-xs overflow-hidden text-ellipsis line-clamp-1">
 							{doc.title}
 						</div>
+						<div class=" text-xs overflow-hidden text-ellipsis line-clamp-1">
+							Collection: "{doc.collection_name}"
+						</div>
 					</div>
 				</div>
 			</div>

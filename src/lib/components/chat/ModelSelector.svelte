@@ -58,7 +58,13 @@
 							class=" "
 							{disabled}
 							on:click={() => {
-								selectedModels = [...selectedModels, ''];
+								if (selectedModels.length < 3){
+									selectedModels = [...selectedModels, ''];
+
+								}
+								else{
+									toast.error($i18n.t('Maximum of 3 models allowed'));
+								}
 							}}
 						>
 							<svg

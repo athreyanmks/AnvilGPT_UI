@@ -107,7 +107,7 @@
 		console.log(selectedDoc)
 		if (selectedDoc) {
 			doc = JSON.parse(JSON.stringify(selectedDoc));
-
+			selectedCollection = doc.collection_name;
 			tags = doc?.content?.tags ?? [];
 		}
 	});
@@ -184,14 +184,14 @@
 	
 							<div class="flex-1 mb-1 text-m text-gray-500">
 								<!-- <label for="dropdown">Choose an option:</label> -->
-								<select id="dropdown" class = "w-7/12 rounded-xl py-2 px-4 text-sm dark:text-gray-300 dark:bg-gray-850 outline-none" on:change={handleSelection} bind:value={selectedCollection}>
+								<select id="dropdown"  class = "w-7/12 rounded-xl py-2 px-4 text-sm dark:text-gray-300 dark:bg-gray-850 outline-none" on:change={handleSelection} bind:value={selectedCollection}>
 									<option value={doc.collection_name} selected>{doc.collection_name}</option>
 									{#each collections as collection}
 									{#if collection !== doc.collection_name}
 									<option value={collection}>{collection}</option>
 									{/if}
 									{/each}
-									<option value="NewCollection">New Collection</option>
+									<option value="NewCollection">+ New Collection</option>
 								</select>
 							</div>
 							<div class="flex-1 mb-1 text-m text-gray-500">	

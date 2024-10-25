@@ -2173,6 +2173,7 @@ async def oauth_callback(provider: str, request: Request, response: Response):
         log.warning(f"OAuth callback error: {e}")
         raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
     user_data: UserInfo = token["userinfo"]
+    print(user_data)
 
     sub = user_data.get("sub")
     if not sub:
@@ -2233,6 +2234,7 @@ async def oauth_callback(provider: str, request: Request, response: Response):
                 else webui_app.state.config.DEFAULT_USER_ROLE
             )
             # print(username_claim)
+            # print(user_data)
             # print(user_data.get(username_claim, "User"))
             # print("#####################")
             # print(str(token))

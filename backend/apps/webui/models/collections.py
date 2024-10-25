@@ -126,6 +126,7 @@ class CollectionsTable:
             with get_db() as db:
                 print(user_id, collection_name)
                 db.query(Collection).filter_by(user_id=user_id, collection_name=collection_name).delete()
+                db.commit()
                 return True
         except Exception as e:
             print(e)

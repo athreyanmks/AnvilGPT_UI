@@ -100,6 +100,8 @@ async def download_chat_as_pdf(
     for message in form_data.messages:
         role = message["role"]
         content = message["content"]
+        # print(role, content)
+        role =  message['modelName'] if role == 'assistant' else role
         pdf.set_font("NotoSans", "B", size=14)  # Bold for the role
         pdf.multi_cell(effective_page_width, 10, f"{role.upper()}", 0, "L")
         pdf.ln(1)  # Extra space between messages

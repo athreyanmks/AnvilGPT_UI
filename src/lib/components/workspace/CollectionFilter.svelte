@@ -4,7 +4,8 @@
     import {documents, created_collections, collection_filtered_documents, mobile } from '$lib/stores';
 	import { flyAndScale } from '$lib/utils/transitions';
 	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
-	import { deleteCollectionByName } from '$lib/apis/collections';
+	import { deleteCollectionByName, getCollections } from '$lib/apis/collections';
+	import { toast } from 'svelte-sonner';
 
 
 
@@ -44,12 +45,11 @@
     }
 	function handleCollectionDelete(collection_name){
 		if(collectionCount[collection_name]){
-			alert('Collection is not empty');
-			console.log(collectionCount[collection_name]);
-			console.log('Collection is not empty');
+			toast.error('Collection is not empty');
 		}
 		else{
 		deleteCollectionByName(localStorage.token, collection_name);
+		created_collections.set(getCollections(localStorage.token));
 		}
 	}
 </script>
@@ -147,7 +147,7 @@
 					on:click={() => {
 						handleCollectionDelete(collection.collection_name);
 					}}
-					disabled={collectionCount[collection.collection_name]}
+
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"

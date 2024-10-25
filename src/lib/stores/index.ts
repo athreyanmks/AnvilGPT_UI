@@ -58,7 +58,7 @@ export const collection_filtered_documents = writable([
 	}
 ]);
 
-export const created_collections = writable([{collection_name: 'collection_name'}]);
+export const created_collections = writable([{collection_name: 'collection_name', user_id :'2d0888d4-d6d7-41f3-b1cd-74face4eb167', type :'collection', title :'drylands', name :'drylands', collection_names:['drylands']}]);
 
 export const tools = writable([]);
 export const functions = writable([]);
